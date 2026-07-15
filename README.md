@@ -2,7 +2,7 @@
 
 EduMate is a multi-agent campus learning assistant built with Vue 3, FastAPI, PostgreSQL, Qdrant, and OpenAI APIs.
 
-This repository is currently in Phase 1: project skeleton and local infrastructure.
+This repository is currently in Phase 2: authentication, user-scoped data models, and harness checks.
 
 ## Services
 
@@ -20,6 +20,12 @@ cp backend/.env.example backend/.env
 docker-compose up -d
 ```
 
+Run migrations:
+
+```bash
+docker compose run --rm migrate
+```
+
 ## Local Development
 
 ```bash
@@ -31,5 +37,19 @@ uvicorn app.main:app --reload
 cd frontend
 npm install
 npm run dev
+```
+
+## Harness Checks
+
+```powershell
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_skeleton.ps1
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_auth_static.ps1
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_api_smoke.ps1
+```
+
+To run the full local auth flow with Docker:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File harness/scripts/run_auth_flow.ps1
 ```
 

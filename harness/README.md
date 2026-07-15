@@ -13,6 +13,9 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/check_auth_static.ps1
 
 # Run real auth API smoke checks against a running backend.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_api_smoke.ps1
+
+# Start infrastructure, run migrations, start backend, then run Auth API smoke.
+powershell -ExecutionPolicy Bypass -File harness/scripts/run_auth_flow.ps1
 ```
 
 ## Auth API Smoke
@@ -41,4 +44,17 @@ The latest result is written to:
 
 ```text
 harness/reports/latest_auth_smoke.json
+```
+
+## Local Infrastructure
+
+```powershell
+# Start only PostgreSQL and Qdrant.
+powershell -ExecutionPolicy Bypass -File harness/scripts/start_infra.ps1
+
+# Run backend migrations locally from the backend directory.
+powershell -ExecutionPolicy Bypass -File backend/scripts/migrate.ps1
+
+# Run the backend locally.
+powershell -ExecutionPolicy Bypass -File backend/scripts/run_dev.ps1
 ```
