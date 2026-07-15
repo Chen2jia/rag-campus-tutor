@@ -1,0 +1,2 @@
+"""EduMate backend application package."""
+

@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Environment
+.env
+backend/.env
+frontend/.env
+
+# Uploads and generated data
+backend/uploads/*
+!backend/uploads/.gitkeep
+harness/reports/*
+!harness/reports/.gitkeep
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
