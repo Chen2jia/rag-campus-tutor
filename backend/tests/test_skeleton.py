@@ -13,6 +13,7 @@ def test_expected_backend_skeleton_exists() -> None:
         "app/routers/documents.py",
         "app/routers/tasks.py",
         "app/routers/review.py",
+        "app/routers/plan.py",
         "app/models/__init__.py",
         "app/schemas/__init__.py",
         "app/services/__init__.py",
