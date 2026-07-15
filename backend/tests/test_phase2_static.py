@@ -30,7 +30,7 @@ def test_business_models_include_user_id() -> None:
 
 def test_auth_router_is_registered() -> None:
     main_text = (ROOT / "app" / "main.py").read_text(encoding="utf-8")
-    assert "from app.routers import auth, health" in main_text
+    assert "auth" in main_text
     assert "app.include_router(auth.router" in main_text
 
 

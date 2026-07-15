@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     database_echo: bool = False
     qdrant_url: str = "http://localhost:6333"
     openai_api_key: str = "sk-change-me"
+    upload_dir: str = "uploads"
+    max_upload_bytes: int = 50 * 1024 * 1024
 
     jwt_secret_key: str = "change-me"
     jwt_algorithm: str = "HS256"
@@ -33,4 +35,3 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
-
