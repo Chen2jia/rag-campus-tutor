@@ -17,6 +17,9 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/check_documents_static.
 # Check that task API files and user isolation filters exist.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_tasks_static.ps1
 
+# Check that review API files, due-date filters, and SM-2 logic exist.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_review_static.ps1
+
 # Run real auth API smoke checks against a running backend.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_api_smoke.ps1
 
