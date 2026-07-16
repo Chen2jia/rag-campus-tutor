@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     formula_ocr_enabled: bool = False
     formula_ocr_engine: str = "pix2tex"
     formula_ocr_min_confidence: float = 0.7
+    log_level: str = "INFO"
 
     jwt_secret_key: str = "change-me"
     jwt_algorithm: str = "HS256"
