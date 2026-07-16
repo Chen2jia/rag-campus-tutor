@@ -36,6 +36,7 @@ def test_phase10_readme_documents_harness_and_e2e_flow() -> None:
         "PYTEST_DISABLE_PLUGIN_AUTOLOAD",
         "check_e2e_demo_flow.ps1",
         "run_e2e_flow.ps1",
+        "run_llm_live_smoke.ps1",
         "EDUMATE_BASE_URL",
         "harness/reports/latest_e2e.json",
         "Target backend does not look like EduMate",

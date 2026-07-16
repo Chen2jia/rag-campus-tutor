@@ -180,6 +180,12 @@ powershell -ExecutionPolicy Bypass -File harness\scripts\check_e2e_demo_flow.ps1
 powershell -ExecutionPolicy Bypass -File harness\scripts\run_e2e_flow.ps1
 ```
 
+已配置 `backend/.env` 后，运行一次真实模型连通性 smoke：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File harness\scripts\run_llm_live_smoke.ps1
+```
+
 如果后端不是默认端口：
 
 ```powershell
