@@ -22,6 +22,12 @@ def test_backend_dockerfile_includes_migrations() -> None:
     assert "COPY alembic.ini ." in dockerfile
 
 
+def test_backend_requirements_pin_passlib_compatible_bcrypt() -> None:
+    requirements = (ROOT / "backend" / "requirements.txt").read_text(encoding="utf-8")
+    assert "passlib[bcrypt]==1.7.4" in requirements
+    assert "bcrypt==4.0.1" in requirements
+
+
 def test_compose_has_migrate_service_and_container_defaults() -> None:
     compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
     assert "migrate:" in compose
