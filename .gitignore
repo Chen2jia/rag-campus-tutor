@@ -21,6 +21,8 @@ harness/reports/*
 node_modules/
 frontend/dist/
 frontend/.vite/
+*.tsbuildinfo
+frontend/*.log
 
 # OS / editors
 .DS_Store
