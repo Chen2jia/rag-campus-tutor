@@ -2,7 +2,7 @@ import json
 import os
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 import httpx
 
@@ -18,7 +18,7 @@ def assert_status(response: httpx.Response, expected_status: int, label: str) ->
         )
 
 
-def write_report(report: dict[str, Any]) -> None:
+def write_report(report: Dict[str, Any]) -> None:
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(
         json.dumps(report, indent=2, ensure_ascii=False),
@@ -35,7 +35,7 @@ def main() -> None:
         "password": "password123",
     }
 
-    report: dict[str, Any] = {
+    report: Dict[str, Any] = {
         "base_url": base_url,
         "checks": [],
         "test_user": {
