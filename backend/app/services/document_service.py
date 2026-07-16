@@ -4,7 +4,7 @@ import uuid
 from pathlib import Path
 
 from fastapi import HTTPException, UploadFile, status
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -12,7 +12,12 @@ from app.models.document import Document
 from app.models.document_chunk import DocumentChunkRecord
 from app.models.user import User
 from app.rag.chunker import DocumentChunk
-from app.schemas.document import DocumentStatusResponse, DocumentUploadResponse
+from app.schemas.document import (
+    DocumentChunkSearchResponse,
+    DocumentChunkSearchResult,
+    DocumentStatusResponse,
+    DocumentUploadResponse,
+)
 from app.services.document_processor import DocumentProcessor
 
 
@@ -61,6 +66,62 @@ class DocumentService:
             status=document.status,
             total_chunks=document.total_chunks,
             error_message=document.error_message,
+        )
+
+    async def search_chunks(
+        self,
+        user: User,
+        query_text: str,
+        limit: int = 10,
+        document_id: uuid.UUID | None = None,
+    ) -> DocumentChunkSearchResponse:
+        clean_query = query_text.strip()
+        if not clean_query:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Search query cannot be empty",
+            )
+
+        like_query = f"%{clean_query}%"
+        statement = (
+            select(DocumentChunkRecord, Document.filename)
+            .join(Document, Document.id == DocumentChunkRecord.document_id)
+            .where(
+                DocumentChunkRecord.user_id == user.id,
+                Document.user_id == user.id,
+                or_(
+                    DocumentChunkRecord.text.ilike(like_query),
+                    DocumentChunkRecord.path.ilike(like_query),
+                    DocumentChunkRecord.section.ilike(like_query),
+                ),
+            )
+            .order_by(Document.created_at.desc(), DocumentChunkRecord.chunk_index.asc())
+            .limit(limit)
+        )
+        if document_id is not None:
+            statement = statement.where(DocumentChunkRecord.document_id == document_id)
+
+        rows = (await self.db.execute(statement)).all()
+        results = [
+            DocumentChunkSearchResult(
+                id=chunk.id,
+                document_id=chunk.document_id,
+                filename=filename,
+                chunk_index=chunk.chunk_index,
+                path=chunk.path,
+                section=chunk.section,
+                text=chunk.text,
+                page_start=chunk.page_start,
+                page_end=chunk.page_end,
+                contains_formula=chunk.contains_formula,
+                formulas_metadata=chunk.formulas_metadata,
+            )
+            for chunk, filename in rows
+        ]
+        return DocumentChunkSearchResponse(
+            query=clean_query,
+            total=len(results),
+            results=results,
         )
 
     async def delete_document(self, user: User, document_id: uuid.UUID) -> bool:

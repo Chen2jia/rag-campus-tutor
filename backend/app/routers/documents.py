@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 from uuid import UUID
 
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, File, Query, UploadFile
 
 from app.core.deps import CurrentUser, DbSession
 from app.schemas.document import (
     DeleteResponse,
+    DocumentChunkSearchResponse,
     DocumentRead,
     DocumentStatusResponse,
     DocumentUploadResponse,
@@ -26,6 +29,22 @@ async def upload_document(
     file: UploadFile = File(...),
 ) -> DocumentUploadResponse:
     return await DocumentService(db).upload_document(current_user, file)
+
+
+@router.get("/chunks/search", response_model=DocumentChunkSearchResponse)
+async def search_document_chunks(
+    current_user: CurrentUser,
+    db: DbSession,
+    q: str = Query(..., min_length=1),
+    limit: int = Query(10, ge=1, le=20),
+    document_id: UUID | None = None,
+) -> DocumentChunkSearchResponse:
+    return await DocumentService(db).search_chunks(
+        user=current_user,
+        query_text=q,
+        limit=limit,
+        document_id=document_id,
+    )
 
 
 @router.get("/{task_id}/status", response_model=DocumentStatusResponse)

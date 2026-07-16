@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 from uuid import UUID
 
@@ -26,6 +28,28 @@ class DocumentStatusResponse(BaseModel):
     status: str
     total_chunks: int
     error_message: str | None
+
+
+class DocumentChunkSearchResult(BaseModel):
+    id: UUID
+    document_id: UUID
+    filename: str
+    chunk_index: int
+    path: str
+    section: str
+    text: str
+    page_start: int
+    page_end: int
+    contains_formula: bool
+    formulas_metadata: list[dict[str, object]]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DocumentChunkSearchResponse(BaseModel):
+    query: str
+    total: int
+    results: list[DocumentChunkSearchResult]
 
 
 class DeleteResponse(BaseModel):

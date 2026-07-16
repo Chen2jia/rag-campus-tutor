@@ -41,6 +41,9 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/check_document_processi
 # Check persisted document chunk model, migration, and metadata storage.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_document_chunks_static.ps1
 
+# Check user-scoped keyword search over persisted document chunks.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_document_search_static.ps1
+
 # Run real auth API smoke checks against a running backend.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_api_smoke.ps1
 
