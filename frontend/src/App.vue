@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from "vue";
 
 import {
-  generatePlan,
   listDocuments,
   listTasks,
   listTodayReviews,
@@ -16,6 +15,7 @@ import {
 } from "./api/client";
 import ChatPanel from "./components/ChatPanel.vue";
 import DocumentLibraryPanel from "./components/DocumentLibraryPanel.vue";
+import PlanPanel from "./components/PlanPanel.vue";
 import ReviewPanel from "./components/ReviewPanel.vue";
 import TaskPanel from "./components/TaskPanel.vue";
 
@@ -32,10 +32,6 @@ const documents = ref<DocumentRead[]>([]);
 const selectedDocumentId = ref("");
 const tasks = ref<TaskRead[]>([]);
 const reviews = ref<ReviewRead[]>([]);
-const planGoal = ref("");
-const planDays = ref(7);
-const planSubject = ref("");
-const planStartDate = ref(today());
 const planResult = ref<PlanGenerateResponse | null>(null);
 const loading = ref("");
 const notice = ref("");
@@ -155,21 +151,8 @@ function updateReviews(nextReviews: ReviewRead[]) {
   reviews.value = nextReviews;
 }
 
-async function submitPlan() {
-  if (!token.value || !planGoal.value.trim()) {
-    return;
-  }
-  await runTask("plan", async () => {
-    planResult.value = await generatePlan(
-      token.value,
-      planGoal.value.trim(),
-      planDays.value,
-      planSubject.value.trim(),
-      planStartDate.value,
-    );
-    tasks.value = await listTasks(token.value);
-    notice.value = `已生成 ${planResult.value.days.length} 天计划`;
-  });
+function updatePlanResult(nextPlanResult: PlanGenerateResponse | null) {
+  planResult.value = nextPlanResult;
 }
 
 async function runTask(name: string, task: () => Promise<void>) {
@@ -295,50 +278,15 @@ async function runTask(name: string, task: () => Promise<void>) {
         @error="errorMessage = $event"
       />
 
-      <section v-show="activeTab === 'plan'" class="two-column">
-        <section class="panel">
-          <h2>生成计划</h2>
-          <form class="form-grid" @submit.prevent="submitPlan">
-            <label class="field">
-              目标
-              <input v-model="planGoal" placeholder="例如：两周复习线性代数" />
-            </label>
-            <label class="field">
-              科目
-              <input v-model="planSubject" placeholder="可选" />
-            </label>
-            <div class="split-row">
-              <label class="field">
-                天数
-                <input v-model.number="planDays" type="number" min="1" max="30" />
-              </label>
-              <label class="field">
-                开始日期
-                <input v-model="planStartDate" type="date" />
-              </label>
-            </div>
-            <button type="submit" class="primary-button" :disabled="!planGoal.trim() || loading === 'plan'">
-              生成
-            </button>
-          </form>
-        </section>
-
-        <section class="panel">
-          <div class="panel-heading">
-            <h2>计划结果</h2>
-            <span v-if="planResult" class="counter">{{ planResult.created_tasks.length }} 任务</span>
-          </div>
-          <div v-if="planResult" class="plan-result">
-            <p>{{ planResult.plan_text }}</p>
-            <article v-for="day in planResult.days" :key="day.day" class="plan-day">
-              <span>Day {{ day.day }} · {{ day.date }}</span>
-              <strong>{{ day.title }}</strong>
-              <p>{{ day.description }}</p>
-            </article>
-          </div>
-          <p v-else class="empty-state">暂无计划</p>
-        </section>
-      </section>
+      <PlanPanel
+        v-show="activeTab === 'plan'"
+        :token="token"
+        :plan-result="planResult"
+        @update:plan-result="updatePlanResult"
+        @update:tasks="updateTasks"
+        @notice="notice = $event"
+        @error="errorMessage = $event"
+      />
     </section>
   </main>
 </template>

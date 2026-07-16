@@ -9,6 +9,7 @@ def main() -> None:
         "frontend/src/App.vue",
         "frontend/src/api/client.ts",
         "frontend/src/components/DocumentLibraryPanel.vue",
+        "frontend/src/components/PlanPanel.vue",
         "frontend/src/components/ReviewPanel.vue",
         "frontend/src/components/TaskPanel.vue",
         "frontend/package.json",
@@ -21,6 +22,9 @@ def main() -> None:
     client_text = (ROOT / "frontend" / "src" / "api" / "client.ts").read_text(encoding="utf-8")
     document_panel_text = (
         ROOT / "frontend" / "src" / "components" / "DocumentLibraryPanel.vue"
+    ).read_text(encoding="utf-8")
+    plan_panel_text = (
+        ROOT / "frontend" / "src" / "components" / "PlanPanel.vue"
     ).read_text(encoding="utf-8")
     review_panel_text = (
         ROOT / "frontend" / "src" / "components" / "ReviewPanel.vue"
@@ -55,6 +59,7 @@ def main() -> None:
         "selectedDocumentId",
         "activeTab",
         "DocumentLibraryPanel",
+        "PlanPanel",
         "ReviewPanel",
         "TaskPanel",
         "submitTask",
@@ -64,7 +69,14 @@ def main() -> None:
         "searchResults",
     ]
     combined_text = "\n".join(
-        [app_text, client_text, document_panel_text, review_panel_text, task_panel_text]
+        [
+            app_text,
+            client_text,
+            document_panel_text,
+            plan_panel_text,
+            review_panel_text,
+            task_panel_text,
+        ]
     )
     missing_fragments = [fragment for fragment in required_fragments if fragment not in combined_text]
     if missing_fragments:
