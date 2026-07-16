@@ -26,6 +26,13 @@ Run migrations:
 docker compose run --rm migrate
 ```
 
+RAG answers stay in placeholder mode until both values are configured:
+
+```bash
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=your-model-name
+```
+
 ## Local Development
 
 ```bash

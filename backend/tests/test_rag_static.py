@@ -41,6 +41,8 @@ def test_rag_schema_contains_sources_and_context() -> None:
         "sources: list[RagSource]",
         "context_text: str",
         "is_placeholder: bool = True",
+        'answer_provider: str = "placeholder"',
+        "model: str | None = None",
     ]:
         assert fragment in schema_text
 
@@ -50,11 +52,12 @@ def test_rag_service_reuses_document_chunk_search() -> None:
     for fragment in [
         "class RagService",
         "DocumentService(db)",
+        "AnswerGenerator()",
         "search_chunks",
         "query_text=question",
         "document_id=payload.document_id",
         "_format_context",
-        "_build_placeholder_answer",
-        "is_placeholder=True",
+        "answer_generator.generate",
+        "answer_provider=generated_answer.answer_provider",
     ]:
         assert fragment in service_text

@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     database_echo: bool = False
     qdrant_url: str = "http://localhost:6333"
     openai_api_key: str = "sk-change-me"
+    openai_model: str = ""
     upload_dir: str = "uploads"
     max_upload_bytes: int = 50 * 1024 * 1024
     formula_ocr_enabled: bool = False

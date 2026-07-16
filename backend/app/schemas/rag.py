@@ -27,3 +27,5 @@ class RagAskResponse(BaseModel):
     sources: list[RagSource]
     context_text: str
     is_placeholder: bool = True
+    answer_provider: str = "placeholder"
+    model: str | None = None

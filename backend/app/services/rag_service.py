@@ -5,12 +5,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.schemas.document import DocumentChunkSearchResult
 from app.schemas.rag import RagAskRequest, RagAskResponse, RagSource
+from app.services.answer_generator import AnswerGenerator
 from app.services.document_service import DocumentService
 
 
 class RagService:
     def __init__(self, db: AsyncSession) -> None:
         self.document_service = DocumentService(db)
+        self.answer_generator = AnswerGenerator()
 
     async def ask(self, user: User, payload: RagAskRequest) -> RagAskResponse:
         question = payload.question.strip()
@@ -33,12 +35,19 @@ class RagService:
             for result in search_response.results
         ]
         context_text = self._format_context(search_response.results)
+        generated_answer = await self.answer_generator.generate(
+            question=question,
+            context_text=context_text,
+            results=search_response.results,
+        )
         return RagAskResponse(
             question=question,
-            answer=self._build_placeholder_answer(question=question, sources=sources),
+            answer=generated_answer.answer,
             sources=sources,
             context_text=context_text,
-            is_placeholder=True,
+            is_placeholder=generated_answer.is_placeholder,
+            answer_provider=generated_answer.answer_provider,
+            model=generated_answer.model,
         )
 
     @staticmethod
@@ -54,16 +63,3 @@ class RagService:
                 )
             )
         return "\n\n".join(blocks)
-
-    @staticmethod
-    def _build_placeholder_answer(question: str, sources: list[RagSource]) -> str:
-        if not sources:
-            return (
-                f"暂时没有在已上传资料中找到和「{question}」直接相关的内容。"
-                "后续接入向量检索和大模型后，可以给出更完整的解释。"
-            )
-        source_count = len(sources)
-        return (
-            f"已从已上传资料中找到 {source_count} 个相关片段。"
-            "当前是占位回答，下一步会接入大模型，根据 sources 和 context_text 生成正式答案。"
-        )
