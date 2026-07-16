@@ -1,0 +1,36 @@
+{
+  "version": "0.1.0",
+  "description": "Small RAG evaluation seed set for EduMate demo and regression checks.",
+  "cases": [
+    {
+      "id": "rag_calculus_taylor_summary",
+      "category": "knowledge_summary",
+      "question": "Summarize the Taylor formula notes.",
+      "expected_keywords": ["Taylor", "formula", "derivative"],
+      "required_source_terms": ["calculus", "Taylor"],
+      "min_sources": 1,
+      "checks": ["answer_mentions_expected_keywords", "has_citation_source"],
+      "notes": "Basic retrieval and grounded answer case for calculus PDF notes."
+    },
+    {
+      "id": "rag_formula_latex_policy",
+      "category": "formula",
+      "question": "Explain the formula in standard LaTeX if the source text supports it.",
+      "expected_keywords": ["LaTeX", "formula"],
+      "required_source_terms": ["formula"],
+      "min_sources": 1,
+      "checks": ["answer_mentions_expected_keywords", "has_citation_source", "does_not_invent_formula"],
+      "notes": "Formula answers should preserve supported formulas and avoid invented LaTeX."
+    },
+    {
+      "id": "rag_no_context_fallback",
+      "category": "fallback",
+      "question": "What does this document say about quantum banana economics?",
+      "expected_keywords": ["not enough", "uploaded", "source"],
+      "required_source_terms": [],
+      "min_sources": 0,
+      "checks": ["safe_no_context_fallback"],
+      "notes": "Out-of-context questions should not fabricate an answer."
+    }
+  ]
+}
