@@ -25,7 +25,7 @@ def test_chat_router_is_registered_and_streams_sse() -> None:
         "CurrentUser",
         "DbSession",
         "StreamingResponse",
-        "KnowledgeAgent(db).stream_answer(current_user, payload)",
+        "MasterAgent(db).stream_answer(current_user, payload)",
         'media_type="text/event-stream"',
         '"Cache-Control": "no-cache"',
         '"X-Accel-Buffering": "no"',

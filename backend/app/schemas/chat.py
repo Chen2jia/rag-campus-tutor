@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+
+class ChatIntent(str, Enum):
+    knowledge = "knowledge"
+    plan = "plan"
+    general = "general"
 
 
 class ChatRequest(BaseModel):
