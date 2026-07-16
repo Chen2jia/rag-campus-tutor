@@ -65,6 +65,9 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/check_rag_static.ps1
 # Check the seed RAG evaluation case set.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_rag_eval_static.ps1
 
+# Run the live RAG eval against a running backend.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_rag_eval.ps1
+
 # Check prompt builder and OpenAI-compatible LLM service wiring.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_llm_service_static.ps1
 
