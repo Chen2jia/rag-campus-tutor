@@ -62,6 +62,57 @@ export type RagAskResponse = {
   model: string | null;
 };
 
+export type ChatStreamStartEvent = {
+  event: "start";
+  data: {
+    message: string;
+    intent: "knowledge" | "plan" | "general";
+  };
+};
+
+export type ChatStreamContentEvent = {
+  event: "content";
+  data: {
+    text: string;
+    intent: "knowledge" | "plan" | "general";
+    is_placeholder?: boolean;
+    answer_provider?: string;
+    model?: string | null;
+    created_tasks?: string[];
+  };
+};
+
+export type ChatStreamCitationsEvent = {
+  event: "citations";
+  data: {
+    sources: RagSource[];
+    context_text: string;
+  };
+};
+
+export type ChatStreamDoneEvent = {
+  event: "done";
+  data: {
+    intent: "knowledge" | "plan" | "general";
+    source_count?: number;
+    created_task_count?: number;
+  };
+};
+
+export type ChatStreamErrorEvent = {
+  event: "error";
+  data: {
+    message: string;
+  };
+};
+
+export type ChatStreamEvent =
+  | ChatStreamStartEvent
+  | ChatStreamContentEvent
+  | ChatStreamCitationsEvent
+  | ChatStreamDoneEvent
+  | ChatStreamErrorEvent;
+
 export type TaskRead = {
   id: string;
   title: string;
@@ -210,6 +261,63 @@ export function askRag(token: string, question: string, documentId: string): Pro
   });
 }
 
+export async function streamChat(
+  token: string,
+  message: string,
+  documentId: string,
+  onEvent: (event: ChatStreamEvent) => void,
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/chat`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message,
+      limit: 5,
+      document_id: documentId || null,
+    }),
+  });
+
+  if (!response.ok) {
+    const messageText = await readErrorMessage(response);
+    throw new Error(messageText);
+  }
+
+  if (!response.body) {
+    throw new Error("Streaming response body is empty");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    buffer += decoder.decode(value, { stream: true });
+    let splitIndex = buffer.indexOf("\n\n");
+    while (splitIndex !== -1) {
+      const rawEvent = buffer.slice(0, splitIndex);
+      buffer = buffer.slice(splitIndex + 2);
+      const parsedEvent = parseSseEvent(rawEvent);
+      if (parsedEvent) {
+        onEvent(parsedEvent);
+      }
+      splitIndex = buffer.indexOf("\n\n");
+    }
+  }
+
+  const finalEvent = parseSseEvent(buffer);
+  if (finalEvent) {
+    onEvent(finalEvent);
+  }
+}
+
 export function listTasks(token: string): Promise<TaskRead[]> {
   return request<TaskRead[]>("/tasks", { token });
 }
@@ -287,4 +395,32 @@ export function generatePlan(
       start_date: startDate || null,
     },
   });
+}
+
+function parseSseEvent(rawEvent: string): ChatStreamEvent | null {
+  const lines = rawEvent.split(/\r?\n/);
+  let eventName = "";
+  const dataLines: string[] = [];
+
+  for (const line of lines) {
+    if (line.startsWith("event:")) {
+      eventName = line.slice("event:".length).trim();
+      continue;
+    }
+    if (line.startsWith("data:")) {
+      dataLines.push(line.slice("data:".length).trim());
+    }
+  }
+
+  if (!eventName || dataLines.length === 0) {
+    return null;
+  }
+
+  const dataText = dataLines.join("\n");
+  try {
+    const data = JSON.parse(dataText) as ChatStreamEvent["data"];
+    return { event: eventName as ChatStreamEvent["event"], data } as ChatStreamEvent;
+  } catch {
+    return null;
+  }
 }

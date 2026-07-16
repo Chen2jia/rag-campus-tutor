@@ -71,6 +71,9 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/check_chat_static.ps1
 # Check frontend auth, library/RAG, tasks, review, and plan workspace wiring.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_frontend_rag_static.ps1
 
+# Check frontend chat SSE wiring and the chat workspace panel.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_frontend_chat_static.ps1
+
 # Run real auth API smoke checks against a running backend.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_api_smoke.ps1
 

@@ -24,12 +24,13 @@ import {
   type TaskRead,
   type User,
 } from "./api/client";
+import ChatPanel from "./components/ChatPanel.vue";
 
-type WorkspaceTab = "library" | "tasks" | "review" | "plan";
+type WorkspaceTab = "chat" | "library" | "tasks" | "review" | "plan";
 
 const token = ref(localStorage.getItem("edumate_token") ?? "");
 const user = ref<User | null>(readStoredUser());
-const activeTab = ref<WorkspaceTab>("library");
+const activeTab = ref<WorkspaceTab>("chat");
 const authMode = ref<"login" | "register">("login");
 const username = ref("");
 const email = ref("");
@@ -73,6 +74,7 @@ const canSubmitAuth = computed(() => {
 });
 
 const tabs = computed<Array<{ id: WorkspaceTab; label: string; count: number | null }>>(() => [
+  { id: "chat", label: "聊天", count: null },
   { id: "library", label: "资料问答", count: documents.value.length },
   { id: "tasks", label: "任务", count: openTasks.value.length },
   { id: "review", label: "复习", count: reviews.value.length },
@@ -392,6 +394,14 @@ async function runTask(name: string, task: () => Promise<void>) {
         <strong v-if="notice">{{ notice }}</strong>
         <strong v-if="errorMessage" class="error-text">{{ errorMessage }}</strong>
       </div>
+
+      <section v-show="activeTab === 'chat'" class="chat-section">
+        <ChatPanel
+          :token="token"
+          :selected-document-id="selectedDocumentId"
+          :selected-document-name="selectedDocument?.filename ?? ''"
+        />
+      </section>
 
       <section v-show="activeTab === 'library'" class="library-grid">
         <aside class="panel document-panel">
