@@ -44,6 +44,9 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/check_document_chunks_s
 # Check user-scoped keyword search over persisted document chunks.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_document_search_static.ps1
 
+# Check placeholder RAG ask API over document chunk search.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_rag_static.ps1
+
 # Run real auth API smoke checks against a running backend.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_api_smoke.ps1
 
