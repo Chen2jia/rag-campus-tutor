@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 import uuid
 from pathlib import Path
 
 from fastapi import HTTPException, UploadFile, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.document import Document
+from app.models.document_chunk import DocumentChunkRecord
 from app.models.user import User
+from app.rag.chunker import DocumentChunk
 from app.schemas.document import DocumentStatusResponse, DocumentUploadResponse
 from app.services.document_processor import DocumentProcessor
 
@@ -124,13 +128,58 @@ class DocumentService:
         try:
             result = DocumentProcessor().process_pdf(document.file_path)
         except Exception as exc:
+            await self._delete_document_chunks(document)
             document.status = "failed"
             document.error_message = str(exc)
             document.total_chunks = 0
         else:
+            await self._replace_document_chunks(document, result.chunks)
             document.status = "processed"
             document.error_message = None
             document.total_chunks = result.total_chunks
 
         await self.db.commit()
         await self.db.refresh(document)
+
+    async def _replace_document_chunks(self, document: Document, chunks: list[DocumentChunk]) -> None:
+        await self._delete_document_chunks(document)
+        self.db.add_all(
+            [
+                DocumentChunkRecord(
+                    user_id=document.user_id,
+                    document_id=document.id,
+                    chunk_index=chunk.chunk_index,
+                    path=chunk.path,
+                    section=chunk.section,
+                    text=chunk.text,
+                    page_start=chunk.page_start,
+                    page_end=chunk.page_end,
+                    contains_formula=chunk.contains_formula,
+                    formulas_metadata=self._serialize_formulas(chunk),
+                )
+                for chunk in chunks
+            ]
+        )
+
+    async def _delete_document_chunks(self, document: Document) -> None:
+        await self.db.execute(
+            delete(DocumentChunkRecord).where(
+                DocumentChunkRecord.document_id == document.id,
+                DocumentChunkRecord.user_id == document.user_id,
+            )
+        )
+
+    @staticmethod
+    def _serialize_formulas(chunk: DocumentChunk) -> list[dict[str, object]]:
+        return [
+            {
+                "raw": formula.raw,
+                "latex": formula.latex,
+                "source": formula.source,
+                "confidence": formula.confidence,
+                "status": formula.status,
+                "page_number": formula.page_number,
+                "bbox": list(formula.bbox),
+            }
+            for formula in chunk.formulas
+        ]

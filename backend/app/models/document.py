@@ -26,3 +26,7 @@ class Document(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user: Mapped["User"] = relationship(back_populates="documents")
+    chunks: Mapped[list["DocumentChunkRecord"]] = relationship(
+        back_populates="document",
+        cascade="all, delete-orphan",
+    )
