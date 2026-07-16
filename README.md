@@ -1,5 +1,21 @@
 # EduMate
 
+## Current Landing Status
+
+This repository is now at the `v0.1.0-demo` landing stage. The current version is focused on a lightweight, demonstrable campus RAG learning assistant rather than a complex production platform.
+
+Verified locally:
+
+- DeepSeek / OpenAI-compatible LLM smoke test: passed.
+- Full Docker E2E flow: passed.
+- Covered E2E path: register, login, upload PDF, document status, user isolation, RAG ask, SSE chat, plan generation, task isolation.
+- Frontend is componentized into Auth, Chat, Document Library, Task, Review, and Plan panels.
+- Document upload status polling is available in the frontend.
+
+Known follow-up:
+
+- RAG quality evaluation still needs a richer fixture set and better relevance thresholds. The strict fallback retrieval tuning was intentionally skipped for now to avoid overfitting the basic demo.
+
 EduMate 是一个面向校园学习场景的多智能体 RAG 学习助手。当前版本以“可演示、可迭代、不过度复杂”为原则，已经具备轻量多用户登录、PDF 知识库、公式提取策略、混合检索、课程问答、学习计划、复习任务和 Harness 检查体系。
 
 ## 当前进度

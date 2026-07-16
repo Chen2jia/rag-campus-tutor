@@ -1,5 +1,14 @@
 # EduMate — 项目实施计划（Plan）
 
+## Current Phase Status
+
+Phase 10 is complete for the `v0.1.0-demo` baseline:
+
+- DeepSeek-compatible LLM smoke test: passed.
+- Docker E2E flow: passed.
+- README and PRD acceptance notes have been updated for the current landing state.
+- Remaining work moves to post-demo iteration: RAG quality eval expansion, frontend polish, and deployment readiness.
+
 > **目标读者**：开发者 / AI 编码助手（如 Codex）  
 > **使用方式**：按阶段推进。每个阶段完成后先对照验收标准检查，再进入下一阶段。  
 > **当前迭代重点**：在原有 RAG 学习助手基础上加入轻量多用户与登录注册，同时保持系统边界清晰。

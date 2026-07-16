@@ -1,5 +1,15 @@
 # EduMate — Phase 10 PRD 验收报告
 
+## Current Verification Update
+
+Status as of the latest local verification:
+
+- LLM live smoke passed with DeepSeek / OpenAI-compatible configuration.
+- Full Docker E2E flow passed.
+- E2E covered registration, login, document upload, document status, user isolation, RAG ask, SSE chat, plan generation, and task isolation.
+- Document upload status polling has been integrated on the frontend.
+- RAG fallback relevance tuning was deliberately skipped for this iteration after an attempted strict threshold reduced normal recall. It remains a quality-evaluation follow-up, not a blocker for `v0.1.0-demo`.
+
 > **验收阶段**：Phase 10.5 最终对照 PRD 验收  
 > **验收目标**：确认当前版本是否满足 PRD 中定义的基础交付范围，并记录已知限制与下一轮迭代方向。  
 > **验收结论**：当前版本已经达到“可本地启动、可演示、可继续迭代”的基础交付状态。核心链路覆盖轻量多用户、PDF 知识库、RAG 问答、学习计划、复习任务、前端工作台和 Harness 检查。
