@@ -10,6 +10,8 @@ def main() -> None:
         "backend/app/schemas/rag.py",
         "backend/app/services/rag_service.py",
         "backend/app/services/answer_generator.py",
+        "backend/app/services/llm_service.py",
+        "backend/app/rag/prompt_builder.py",
     ]
     missing = [path for path in required_paths if not (ROOT / path).exists()]
     if missing:
@@ -26,6 +28,12 @@ def main() -> None:
         encoding="utf-8"
     )
     generator_text = (ROOT / "backend" / "app" / "services" / "answer_generator.py").read_text(
+        encoding="utf-8"
+    )
+    llm_text = (ROOT / "backend" / "app" / "services" / "llm_service.py").read_text(
+        encoding="utf-8"
+    )
+    prompt_text = (ROOT / "backend" / "app" / "rag" / "prompt_builder.py").read_text(
         encoding="utf-8"
     )
     config_text = (ROOT / "backend" / "app" / "core" / "config.py").read_text(
@@ -49,12 +57,20 @@ def main() -> None:
         "answer_generator.generate",
         "class AnswerGenerator",
         "_openai_is_configured",
+        "RagPromptBuilder",
+        "LlmService",
+        "prompt_builder.build",
+        "llm_service.generate",
+        "class LlmService",
         'import_module("openai")',
         "AsyncOpenAI",
         "client.chat.completions.create",
         'openai_model: str = ""',
+        'openai_base_url: str = ""',
     ]
-    combined_text = "\n".join([main_text, router_text, schema_text, service_text, generator_text, config_text])
+    combined_text = "\n".join(
+        [main_text, router_text, schema_text, service_text, generator_text, llm_text, prompt_text, config_text]
+    )
     missing_fragments = [fragment for fragment in required_fragments if fragment not in combined_text]
     if missing_fragments:
         raise SystemExit(f"RAG placeholder API missing fragments: {', '.join(missing_fragments)}")

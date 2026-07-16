@@ -62,6 +62,9 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/check_document_search_s
 # Check placeholder RAG ask API over document chunk search.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_rag_static.ps1
 
+# Check prompt builder and OpenAI-compatible LLM service wiring.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_llm_service_static.ps1
+
 # Check frontend auth, library/RAG, tasks, review, and plan workspace wiring.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_frontend_rag_static.ps1
 

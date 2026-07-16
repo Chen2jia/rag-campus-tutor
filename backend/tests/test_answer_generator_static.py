@@ -13,13 +13,12 @@ def test_answer_generator_has_openai_and_placeholder_paths() -> None:
     for fragment in [
         "class GeneratedAnswer",
         "class AnswerGenerator",
+        "RagPromptBuilder",
+        "LlmService",
+        "LlmServiceError",
         "_openai_is_configured",
-        "settings.openai_api_key",
-        "settings.openai_model",
-        'api_key not in {"sk-change-me", "change-me"}',
-        'import_module("openai")',
-        "AsyncOpenAI",
-        "client.chat.completions.create",
+        "prompt_builder.build",
+        "llm_service.generate",
         "_placeholder_no_context",
         "_placeholder_with_context",
     ]:
@@ -30,4 +29,6 @@ def test_openai_model_config_is_declared() -> None:
     config_text = (ROOT / "app" / "core" / "config.py").read_text(encoding="utf-8")
     env_text = (ROOT / ".env.example").read_text(encoding="utf-8")
     assert 'openai_model: str = ""' in config_text
+    assert 'openai_base_url: str = ""' in config_text
     assert "OPENAI_MODEL=" in env_text
+    assert "OPENAI_BASE_URL=" in env_text

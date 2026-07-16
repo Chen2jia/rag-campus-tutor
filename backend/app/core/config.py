@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     embedding_model: str = "text-embedding-3-small"
     embedding_dimension: int = 1536
     openai_api_key: str = "sk-change-me"
+    openai_base_url: str = ""
     openai_model: str = ""
     upload_dir: str = "uploads"
     max_upload_bytes: int = 50 * 1024 * 1024
