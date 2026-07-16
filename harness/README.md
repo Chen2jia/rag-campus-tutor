@@ -65,6 +65,9 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/check_rag_static.ps1
 # Check prompt builder and OpenAI-compatible LLM service wiring.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_llm_service_static.ps1
 
+# Check authenticated chat SSE wiring over the knowledge agent.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_chat_static.ps1
+
 # Check frontend auth, library/RAG, tasks, review, and plan workspace wiring.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_frontend_rag_static.ps1
 
