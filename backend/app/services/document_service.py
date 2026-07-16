@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.models.document import Document
 from app.models.user import User
 from app.schemas.document import DocumentStatusResponse, DocumentUploadResponse
+from app.services.document_processor import DocumentProcessor
 
 
 class DocumentService:
@@ -41,6 +42,7 @@ class DocumentService:
         self.db.add(document)
         await self.db.commit()
         await self.db.refresh(document)
+        await self._process_uploaded_document(document)
 
         return DocumentUploadResponse(
             task_id=document.id,
@@ -113,3 +115,22 @@ class DocumentService:
                         detail="PDF file exceeds the 50MB limit",
                     )
                 output.write(chunk)
+
+    async def _process_uploaded_document(self, document: Document) -> None:
+        document.status = "processing"
+        document.error_message = None
+        await self.db.commit()
+
+        try:
+            result = DocumentProcessor().process_pdf(document.file_path)
+        except Exception as exc:
+            document.status = "failed"
+            document.error_message = str(exc)
+            document.total_chunks = 0
+        else:
+            document.status = "processed"
+            document.error_message = None
+            document.total_chunks = result.total_chunks
+
+        await self.db.commit()
+        await self.db.refresh(document)

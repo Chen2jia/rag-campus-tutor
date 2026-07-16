@@ -35,6 +35,9 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/check_formula_static.ps
 # Check chunk generation and formula-preserving metadata.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_chunker_static.ps1
 
+# Check upload-to-parse-to-chunks document processing integration.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_document_processing_static.ps1
+
 # Run real auth API smoke checks against a running backend.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_api_smoke.ps1
 
