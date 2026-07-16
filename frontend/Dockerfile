@@ -7,10 +7,9 @@ RUN npm install
 
 COPY index.html .
 COPY src ./src
-COPY vite.config.ts .
+COPY vite.config.mjs .
 COPY tsconfig.json .
 
 EXPOSE 5173
 
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
-
