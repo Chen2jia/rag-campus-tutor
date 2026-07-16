@@ -47,6 +47,8 @@ def main() -> None:
         "/documents/upload",
         "getDocumentStatus(",
         "/status",
+        "deleteDocument(",
+        "deleteDocumentItem",
         "searchDocumentChunks(",
         "/documents/chunks/search",
         "askRag(",

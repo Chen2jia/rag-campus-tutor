@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref } from "vue";
 
 import {
   askRag,
+  deleteDocument,
   getDocumentStatus,
   listDocuments,
   searchDocumentChunks,
@@ -91,6 +92,27 @@ async function submitUpload() {
     selectedFile.value = null;
     await loadDocumentsData();
     await waitForDocumentProcessing(response.task_id);
+  });
+}
+
+async function deleteDocumentItem(document: DocumentRead) {
+  if (!props.token) {
+    return;
+  }
+  const confirmed = window.confirm(`确定删除资料「${document.filename}」吗？`);
+  if (!confirmed) {
+    return;
+  }
+
+  await runLibraryTask(`document-delete-${document.id}`, async () => {
+    await deleteDocument(props.token, document.id);
+    if (props.selectedDocumentId === document.id) {
+      emit("update:selectedDocumentId", "");
+    }
+    searchResults.value = [];
+    ragAnswer.value = null;
+    await loadDocumentsData();
+    emit("notice", "资料已删除");
   });
 }
 
@@ -199,7 +221,11 @@ async function runLibraryTask(name: string, task: () => Promise<void>) {
         </button>
       </form>
 
-      <p v-if="pollingStatus" class="polling-state">
+      <p
+        v-if="pollingStatus"
+        class="polling-state"
+        :class="{ failed: isFailedStatus(pollingStatus.status) }"
+      >
         PDF 状态：{{ pollingStatus.status }}，{{ pollingStatus.total_chunks }} 个片段
         <span v-if="pollingStatus.error_message"> | {{ pollingStatus.error_message }}</span>
       </p>
@@ -220,7 +246,17 @@ async function runLibraryTask(name: string, task: () => Promise<void>) {
             <strong>{{ document.filename }}</strong>
             <p>{{ document.total_chunks }} chunks | {{ document.status }}</p>
           </div>
-          <button type="button" class="small-button" @click="selectDocument(document.id)">选择</button>
+          <div class="document-actions">
+            <button type="button" class="small-button" @click="selectDocument(document.id)">选择</button>
+            <button
+              type="button"
+              class="small-button danger-button"
+              :disabled="loading === `document-delete-${document.id}`"
+              @click="deleteDocumentItem(document)"
+            >
+              {{ loading === `document-delete-${document.id}` ? "删除中" : "删除" }}
+            </button>
+          </div>
         </article>
         <p v-if="documents.length === 0" class="empty-state">暂无资料</p>
       </div>
@@ -378,6 +414,10 @@ select {
   font-size: 13px;
 }
 
+.polling-state.failed {
+  color: #b42318;
+}
+
 .library-grid {
   display: grid;
   grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
@@ -433,6 +473,18 @@ select {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
+}
+
+.document-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.danger-button {
+  background: #f8d7da;
+  color: #8a1f2d;
 }
 
 .result-item,

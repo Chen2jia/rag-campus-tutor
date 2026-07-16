@@ -252,6 +252,13 @@ export function getDocumentStatus(token: string, taskId: string): Promise<Docume
   return request<DocumentStatusResponse>(`/documents/${taskId}/status`, { token });
 }
 
+export function deleteDocument(token: string, documentId: string): Promise<unknown> {
+  return request<unknown>(`/documents/${documentId}`, {
+    token,
+    method: "DELETE",
+  });
+}
+
 export function searchDocumentChunks(
   token: string,
   query: string,
