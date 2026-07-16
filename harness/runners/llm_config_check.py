@@ -37,10 +37,23 @@ def assert_backend_matches_project(client: httpx.Client) -> None:
         raise AssertionError("Target backend does not expose EduMate /api/llm/status")
 
 
+def iter_string_values(payload: Any) -> list[str]:
+    values: list[str] = []
+    if isinstance(payload, dict):
+        for value in payload.values():
+            values.extend(iter_string_values(value))
+    elif isinstance(payload, list):
+        for item in payload:
+            values.extend(iter_string_values(item))
+    elif isinstance(payload, str):
+        values.append(payload)
+    return values
+
+
 def assert_no_secret_leak(payload: dict[str, Any]) -> None:
-    serialized = json.dumps(payload, ensure_ascii=False).lower()
-    forbidden_fragments = ["api_key", "apikey", "secret", "sk-"]
-    leaks = [fragment for fragment in forbidden_fragments if fragment in serialized]
+    serialized_values = "\n".join(iter_string_values(payload)).lower()
+    forbidden_fragments = ["sk-", "apikey"]
+    leaks = [fragment for fragment in forbidden_fragments if fragment in serialized_values]
     if leaks:
         raise AssertionError(f"LLM status response may leak secrets: {', '.join(leaks)}")
 

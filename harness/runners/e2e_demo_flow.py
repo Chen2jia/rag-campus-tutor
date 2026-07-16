@@ -111,9 +111,9 @@ def parse_sse_events(text: str) -> list[dict[str, Any]]:
         data_lines: list[str] = []
         for line in block.splitlines():
             if line.startswith("event:"):
-                event_name = line.removeprefix("event:").strip()
+                event_name = line[len("event:") :].strip()
             elif line.startswith("data:"):
-                data_lines.append(line.removeprefix("data:").strip())
+                data_lines.append(line[len("data:") :].strip())
         if not event_name:
             continue
         raw_data = "\n".join(data_lines)

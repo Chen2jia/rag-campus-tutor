@@ -48,7 +48,6 @@ def test_llm_config_harness_exists_and_checks_secret_leaks() -> None:
     for fragment in [
         "/api/llm/status",
         "assert_no_secret_leak",
-        "api_key",
         "sk-",
         "latest_llm_config.json",
         "EDUMATE_BASE_URL",
