@@ -62,6 +62,53 @@ export type RagAskResponse = {
   model: string | null;
 };
 
+export type TaskRead = {
+  id: string;
+  title: string;
+  subject: string | null;
+  priority: number;
+  due_date: string | null;
+  is_done: boolean;
+  created_at: string;
+};
+
+export type TaskPayload = {
+  title: string;
+  subject?: string | null;
+  priority?: number;
+  due_date?: string | null;
+};
+
+export type ReviewRead = {
+  id: string;
+  knowledge_point: string;
+  subject: string | null;
+  interval_days: number;
+  next_review_date: string;
+  ease_factor: number;
+  created_at: string;
+};
+
+export type ReviewRateResponse = {
+  item: ReviewRead;
+  score: number;
+  next_interval_days: number;
+  next_review_date: string;
+};
+
+export type PlanDay = {
+  day: number;
+  date: string;
+  title: string;
+  description: string;
+};
+
+export type PlanGenerateResponse = {
+  plan_text: string;
+  days: PlanDay[];
+  created_tasks: TaskRead[];
+};
+
 type RequestOptions = {
   token?: string;
   method?: string;
@@ -159,6 +206,85 @@ export function askRag(token: string, question: string, documentId: string): Pro
       question,
       limit: 5,
       document_id: documentId || null,
+    },
+  });
+}
+
+export function listTasks(token: string): Promise<TaskRead[]> {
+  return request<TaskRead[]>("/tasks", { token });
+}
+
+export function createTask(token: string, payload: TaskPayload): Promise<TaskRead> {
+  return request<TaskRead>("/tasks", {
+    token,
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function updateTask(
+  token: string,
+  taskId: string,
+  payload: Partial<TaskPayload> & { is_done?: boolean },
+): Promise<TaskRead> {
+  return request<TaskRead>(`/tasks/${taskId}`, {
+    token,
+    method: "PUT",
+    body: payload,
+  });
+}
+
+export function deleteTask(token: string, taskId: string): Promise<unknown> {
+  return request<unknown>(`/tasks/${taskId}`, {
+    token,
+    method: "DELETE",
+  });
+}
+
+export function listTodayReviews(token: string): Promise<ReviewRead[]> {
+  return request<ReviewRead[]>("/review/today", { token });
+}
+
+export function createReview(
+  token: string,
+  knowledgePoint: string,
+  subject: string,
+  nextReviewDate: string,
+): Promise<ReviewRead> {
+  return request<ReviewRead>("/review", {
+    token,
+    method: "POST",
+    body: {
+      knowledge_point: knowledgePoint,
+      subject: subject || null,
+      next_review_date: nextReviewDate || null,
+    },
+  });
+}
+
+export function rateReview(token: string, reviewId: string, score: number): Promise<ReviewRateResponse> {
+  return request<ReviewRateResponse>(`/review/${reviewId}/rate`, {
+    token,
+    method: "PUT",
+    body: { score },
+  });
+}
+
+export function generatePlan(
+  token: string,
+  goal: string,
+  days: number,
+  subject: string,
+  startDate: string,
+): Promise<PlanGenerateResponse> {
+  return request<PlanGenerateResponse>("/plan/generate", {
+    token,
+    method: "POST",
+    body: {
+      goal,
+      days,
+      subject: subject || null,
+      start_date: startDate || null,
     },
   });
 }
