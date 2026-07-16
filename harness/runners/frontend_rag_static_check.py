@@ -8,6 +8,7 @@ def main() -> None:
     required_paths = [
         "frontend/src/App.vue",
         "frontend/src/api/client.ts",
+        "frontend/src/components/AuthPanel.vue",
         "frontend/src/components/DocumentLibraryPanel.vue",
         "frontend/src/components/PlanPanel.vue",
         "frontend/src/components/ReviewPanel.vue",
@@ -20,6 +21,9 @@ def main() -> None:
 
     app_text = (ROOT / "frontend" / "src" / "App.vue").read_text(encoding="utf-8")
     client_text = (ROOT / "frontend" / "src" / "api" / "client.ts").read_text(encoding="utf-8")
+    auth_panel_text = (
+        ROOT / "frontend" / "src" / "components" / "AuthPanel.vue"
+    ).read_text(encoding="utf-8")
     document_panel_text = (
         ROOT / "frontend" / "src" / "components" / "DocumentLibraryPanel.vue"
     ).read_text(encoding="utf-8")
@@ -58,6 +62,7 @@ def main() -> None:
         "/plan/generate",
         "selectedDocumentId",
         "activeTab",
+        "AuthPanel",
         "DocumentLibraryPanel",
         "PlanPanel",
         "ReviewPanel",
@@ -72,6 +77,7 @@ def main() -> None:
         [
             app_text,
             client_text,
+            auth_panel_text,
             document_panel_text,
             plan_panel_text,
             review_panel_text,

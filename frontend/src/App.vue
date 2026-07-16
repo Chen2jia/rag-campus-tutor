@@ -5,14 +5,14 @@ import {
   listDocuments,
   listTasks,
   listTodayReviews,
-  login,
-  register,
   type DocumentRead,
   type PlanGenerateResponse,
   type ReviewRead,
   type TaskRead,
+  type TokenResponse,
   type User,
 } from "./api/client";
+import AuthPanel from "./components/AuthPanel.vue";
 import ChatPanel from "./components/ChatPanel.vue";
 import DocumentLibraryPanel from "./components/DocumentLibraryPanel.vue";
 import PlanPanel from "./components/PlanPanel.vue";
@@ -24,16 +24,11 @@ type WorkspaceTab = "chat" | "library" | "tasks" | "review" | "plan";
 const token = ref(localStorage.getItem("edumate_token") ?? "");
 const user = ref<User | null>(readStoredUser());
 const activeTab = ref<WorkspaceTab>("chat");
-const authMode = ref<"login" | "register">("login");
-const username = ref("");
-const email = ref("");
-const password = ref("");
 const documents = ref<DocumentRead[]>([]);
 const selectedDocumentId = ref("");
 const tasks = ref<TaskRead[]>([]);
 const reviews = ref<ReviewRead[]>([]);
 const planResult = ref<PlanGenerateResponse | null>(null);
-const loading = ref("");
 const notice = ref("");
 const errorMessage = ref("");
 
@@ -42,12 +37,6 @@ const selectedDocument = computed(() =>
   documents.value.find((document) => document.id === selectedDocumentId.value),
 );
 const openTasks = computed(() => tasks.value.filter((task) => !task.is_done));
-const canSubmitAuth = computed(() => {
-  if (authMode.value === "register" && username.value.trim().length < 2) {
-    return false;
-  }
-  return email.value.trim().length > 2 && password.value.length >= 8;
-});
 
 const tabs = computed<Array<{ id: WorkspaceTab; label: string; count: number | null }>>(() => [
   { id: "chat", label: "聊天", count: null },
@@ -80,24 +69,15 @@ function readStoredUser(): User | null {
   }
 }
 
-async function submitAuth() {
-  if (!canSubmitAuth.value) {
-    return;
-  }
-  await runTask("auth", async () => {
-    const response =
-      authMode.value === "login"
-        ? await login(email.value.trim(), password.value)
-        : await register(username.value.trim(), email.value.trim(), password.value);
-    token.value = response.access_token;
-    user.value = response.user;
-    localStorage.setItem("edumate_token", response.access_token);
-    localStorage.setItem("edumate_user", JSON.stringify(response.user));
-    await loadWorkspaceData();
-    notice.value = `已进入 ${response.user.username} 的学习空间`;
-  });
+async function handleAuthenticated(response: TokenResponse) {
+  token.value = response.access_token;
+  user.value = response.user;
+  localStorage.setItem("edumate_token", response.access_token);
+  localStorage.setItem("edumate_user", JSON.stringify(response.user));
+  errorMessage.value = "";
+  await loadWorkspaceData();
+  notice.value = `已进入 ${response.user.username} 的学习空间`;
 }
-
 function logout() {
   token.value = "";
   user.value = null;
@@ -155,18 +135,6 @@ function updatePlanResult(nextPlanResult: PlanGenerateResponse | null) {
   planResult.value = nextPlanResult;
 }
 
-async function runTask(name: string, task: () => Promise<void>) {
-  loading.value = name;
-  errorMessage.value = "";
-  notice.value = "";
-  try {
-    await task();
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : "操作失败";
-  } finally {
-    loading.value = "";
-  }
-}
 </script>
 
 <template>
@@ -183,43 +151,7 @@ async function runTask(name: string, task: () => Promise<void>) {
       </div>
     </header>
 
-    <section v-if="!isAuthenticated" class="auth-panel">
-      <div class="auth-tabs">
-        <button
-          type="button"
-          :class="{ active: authMode === 'login' }"
-          @click="authMode = 'login'"
-        >
-          登录
-        </button>
-        <button
-          type="button"
-          :class="{ active: authMode === 'register' }"
-          @click="authMode = 'register'"
-        >
-          注册
-        </button>
-      </div>
-      <form class="auth-form" @submit.prevent="submitAuth">
-        <label v-if="authMode === 'register'">
-          用户名
-          <input v-model="username" autocomplete="username" minlength="2" />
-        </label>
-        <label>
-          邮箱
-          <input v-model="email" autocomplete="email" type="email" />
-        </label>
-        <label>
-          密码
-          <input v-model="password" autocomplete="current-password" type="password" minlength="8" />
-        </label>
-        <button type="submit" class="primary-button" :disabled="!canSubmitAuth || loading === 'auth'">
-          {{ loading === "auth" ? "处理中" : authMode === "login" ? "登录" : "创建账号" }}
-        </button>
-      </form>
-      <p v-if="errorMessage" class="auth-error">{{ errorMessage }}</p>
-    </section>
-
+    <AuthPanel v-if="!isAuthenticated" @authenticated="handleAuthenticated" />
     <section v-else class="workspace">
       <nav class="workspace-tabs" aria-label="工作区">
         <button
