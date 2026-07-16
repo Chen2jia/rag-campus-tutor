@@ -23,6 +23,9 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/check_review_static.ps1
 # Check that plan generation and PlannerAgent placeholder flow exist.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_plan_static.ps1
 
+# Run all Phase 1-3 static harness checks.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_phase3_static.ps1
+
 # Run real auth API smoke checks against a running backend.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_api_smoke.ps1
 
@@ -31,6 +34,19 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/run_auth_flow.ps1
 ```
 
 ## Auth API Smoke
+
+## Phase 3 Static Harness
+
+`check_phase3_static.ps1` is the recommended quick gate before committing backend foundation changes. It runs:
+
+- skeleton check
+- auth static check
+- documents static check
+- tasks static check
+- review static check
+- plan static check
+
+It does not require Docker, a database, or network access.
 
 `check_api_smoke.ps1` expects the backend to be running. By default it calls:
 
