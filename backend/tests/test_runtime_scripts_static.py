@@ -10,6 +10,7 @@ def test_runtime_scripts_exist() -> None:
         "backend/scripts/run_dev.ps1",
         "harness/scripts/start_infra.ps1",
         "harness/scripts/run_auth_flow.ps1",
+        "harness/scripts/run_e2e_flow.ps1",
     ]
     missing = [path for path in expected if not (ROOT / path).exists()]
     assert missing == []
@@ -26,4 +27,6 @@ def test_compose_has_migrate_service_and_container_defaults() -> None:
     assert "migrate:" in compose
     assert "alembic" in compose
     assert "DATABASE_URL" in compose
+    assert "OPENAI_BASE_URL" in compose
+    assert "LOG_LEVEL" in compose
     assert "postgresql+asyncpg://postgres:postgres@postgres:5432/edumate" in compose

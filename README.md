@@ -174,6 +174,12 @@ powershell -ExecutionPolicy Bypass -File harness\scripts\check_api_smoke.ps1
 powershell -ExecutionPolicy Bypass -File harness\scripts\check_e2e_demo_flow.ps1
 ```
 
+启动 Docker 依赖、执行迁移、启动后端并运行完整 E2E：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File harness\scripts\run_e2e_flow.ps1
+```
+
 如果后端不是默认端口：
 
 ```powershell
