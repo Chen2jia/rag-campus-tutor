@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from importlib import import_module
 from typing import Any
+from urllib.parse import urlparse
 
 from app.core.config import settings
 
@@ -12,6 +13,15 @@ class LlmResponse:
     content: str
     provider: str
     model: str
+
+
+@dataclass(frozen=True)
+class LlmConfigStatus:
+    configured: bool
+    provider: str
+    model: str | None
+    base_url_host: str | None
+    missing: list[str]
 
 
 class LlmServiceError(RuntimeError):
@@ -52,6 +62,24 @@ class LlmService:
         model = settings.openai_model.strip()
         return bool(api_key and model and api_key not in {"sk-change-me", "change-me"})
 
+    @classmethod
+    def config_status(cls) -> LlmConfigStatus:
+        api_key = settings.openai_api_key.strip()
+        model = settings.openai_model.strip()
+        missing: list[str] = []
+        if not api_key or api_key in {"sk-change-me", "change-me"}:
+            missing.append("OPENAI_API_KEY")
+        if not model:
+            missing.append("OPENAI_MODEL")
+
+        return LlmConfigStatus(
+            configured=not missing,
+            provider=cls._provider_name(),
+            model=model or None,
+            base_url_host=cls._base_url_host(),
+            missing=missing,
+        )
+
     @staticmethod
     def _extract_message_text(response: Any) -> str:
         content = response.choices[0].message.content
@@ -65,3 +93,12 @@ class LlmService:
         if "deepseek" in base_url:
             return "deepseek"
         return "openai-compatible"
+
+    @staticmethod
+    def _base_url_host() -> str | None:
+        base_url = settings.openai_base_url.strip()
+        if not base_url:
+            return None
+        parsed = urlparse(base_url)
+        host = parsed.netloc or parsed.path.split("/")[0]
+        return host or None

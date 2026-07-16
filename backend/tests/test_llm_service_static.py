@@ -28,6 +28,7 @@ def test_llm_service_supports_openai_compatible_base_url() -> None:
     service_text = (ROOT / "app" / "services" / "llm_service.py").read_text(encoding="utf-8")
     for fragment in [
         "class LlmResponse",
+        "class LlmConfigStatus",
         "class LlmServiceError",
         "class LlmService",
         'import_module("openai")',
@@ -39,6 +40,8 @@ def test_llm_service_supports_openai_compatible_base_url() -> None:
         "deepseek",
         "openai-compatible",
         "is_configured",
+        "config_status",
+        "_base_url_host",
     ]:
         assert fragment in service_text
 
