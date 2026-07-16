@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/edumate"
     database_echo: bool = False
     qdrant_url: str = "http://localhost:6333"
+    qdrant_collection_name: str = "knowledge_chunks"
+    embedding_model: str = "text-embedding-3-small"
+    embedding_dimension: int = 1536
     openai_api_key: str = "sk-change-me"
     openai_model: str = ""
     upload_dir: str = "uploads"

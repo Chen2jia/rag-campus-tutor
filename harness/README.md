@@ -32,6 +32,15 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/check_parser_static.ps1
 # Check formula normalization and OCR confidence gate modules.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_formula_static.ps1
 
+# Check embedding wrapper and OpenAI lazy client wiring.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_embedding_static.ps1
+
+# Check Qdrant vector store wrapper and user-scoped delete/search wiring.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_vector_store_static.ps1
+
+# Check hybrid retriever RRF fusion over vector and BM25 hits.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_retriever_static.ps1
+
 # Check chunk generation and formula-preserving metadata.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_chunker_static.ps1
 
