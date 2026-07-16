@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     openai_api_key: str = "sk-change-me"
     upload_dir: str = "uploads"
     max_upload_bytes: int = 50 * 1024 * 1024
+    formula_ocr_enabled: bool = False
+    formula_ocr_engine: str = "pix2tex"
+    formula_ocr_min_confidence: float = 0.7
 
     jwt_secret_key: str = "change-me"
     jwt_algorithm: str = "HS256"

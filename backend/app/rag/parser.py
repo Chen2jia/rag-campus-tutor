@@ -6,6 +6,19 @@ from pathlib import Path
 from statistics import median
 from typing import Any
 
+from app.rag.formula_normalizer import looks_like_formula, normalize_formula_to_latex
+
+
+@dataclass(frozen=True)
+class FormulaInfo:
+    raw: str
+    latex: str | None
+    source: str
+    confidence: float
+    status: str
+    page_number: int
+    bbox: tuple[float, float, float, float]
+
 
 @dataclass(frozen=True)
 class TextBlock:
@@ -16,6 +29,8 @@ class TextBlock:
     font_name: str
     is_bold: bool
     is_title_candidate: bool
+    block_type: str
+    formulas: list[FormulaInfo]
 
 
 @dataclass(frozen=True)
@@ -33,6 +48,7 @@ class ParsedDocument:
     page_count: int
     pages: list[ParsedPage]
     title_candidates: list[TextBlock]
+    formula_blocks: list[TextBlock]
 
 
 def parse_pdf(file_path: str | Path) -> ParsedDocument:
@@ -56,11 +72,18 @@ def parse_pdf(file_path: str | Path) -> ParsedDocument:
         for block in page.blocks
         if block.is_title_candidate
     ]
+    formula_blocks = [
+        block
+        for page in pages
+        for block in page.blocks
+        if block.block_type == "formula"
+    ]
     return ParsedDocument(
         filename=path.name,
         page_count=len(pages),
         pages=pages,
         title_candidates=title_candidates,
+        formula_blocks=formula_blocks,
     )
 
 
@@ -122,22 +145,42 @@ def _extract_text_blocks(page_dict: dict[str, Any], page_number: int) -> list[Te
 
     body_font_size = _estimate_body_font_size([block["font_size"] for block in raw_blocks])
     return [
-        TextBlock(
-            page_number=block["page_number"],
-            text=block["text"],
-            bbox=block["bbox"],
-            font_size=block["font_size"],
-            font_name=block["font_name"],
-            is_bold=block["is_bold"],
-            is_title_candidate=_is_likely_title(
-                text=block["text"],
-                font_size=block["font_size"],
-                body_font_size=body_font_size,
-                is_bold=block["is_bold"],
-            ),
-        )
+        _build_text_block(block=block, body_font_size=body_font_size)
         for block in raw_blocks
     ]
+
+
+def _build_text_block(block: dict[str, Any], body_font_size: float) -> TextBlock:
+    is_title_candidate = _is_likely_title(
+        text=block["text"],
+        font_size=block["font_size"],
+        body_font_size=body_font_size,
+        is_bold=block["is_bold"],
+    )
+    is_formula_candidate = _is_formula_candidate(
+        text=block["text"],
+        is_title_candidate=is_title_candidate,
+    )
+    block_type = "formula" if is_formula_candidate else "heading" if is_title_candidate else "paragraph"
+    formulas = [
+        _build_native_formula_info(
+            text=block["text"],
+            page_number=block["page_number"],
+            bbox=block["bbox"],
+        )
+    ] if is_formula_candidate else []
+
+    return TextBlock(
+        page_number=block["page_number"],
+        text=block["text"],
+        bbox=block["bbox"],
+        font_size=block["font_size"],
+        font_name=block["font_name"],
+        is_bold=block["is_bold"],
+        is_title_candidate=is_title_candidate,
+        block_type=block_type,
+        formulas=formulas,
+    )
 
 
 def _extract_line(line: dict[str, Any]) -> tuple[str, list[float], list[str]]:
@@ -185,3 +228,26 @@ def _is_likely_title(
     numbered_heading = clean_text[:4].strip().rstrip(".").isdigit()
     chapter_heading = clean_text.startswith(("第", "Chapter", "CHAPTER"))
     return size_lift or is_bold or numbered_heading or chapter_heading
+
+
+def _is_formula_candidate(text: str, is_title_candidate: bool) -> bool:
+    if is_title_candidate and not any(symbol in text for symbol in ("=", "∑", "∫", "√")):
+        return False
+    return looks_like_formula(text)
+
+
+def _build_native_formula_info(
+    text: str,
+    page_number: int,
+    bbox: tuple[float, float, float, float],
+) -> FormulaInfo:
+    latex = normalize_formula_to_latex(text)
+    return FormulaInfo(
+        raw=text,
+        latex=latex,
+        source="native_text",
+        confidence=1.0,
+        status="recognized",
+        page_number=page_number,
+        bbox=bbox,
+    )

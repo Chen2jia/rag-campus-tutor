@@ -29,6 +29,9 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/check_phase3_static.ps1
 # Check the Phase 4 PDF parser module.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_parser_static.ps1
 
+# Check formula normalization and OCR confidence gate modules.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_formula_static.ps1
+
 # Run real auth API smoke checks against a running backend.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_api_smoke.ps1
 

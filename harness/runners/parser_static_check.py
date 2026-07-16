@@ -11,13 +11,18 @@ def main() -> None:
 
     parser_text = parser_path.read_text(encoding="utf-8")
     required_fragments = [
+        "class FormulaInfo",
         "class TextBlock",
         "class ParsedPage",
         "class ParsedDocument",
         "def parse_pdf",
         "get_text(\"dict\")",
         "title_candidates",
+        "formula_blocks",
+        "block_type",
+        "normalize_formula_to_latex",
         "_is_likely_title",
+        "_is_formula_candidate",
         "import_module(\"fitz\")",
     ]
     missing = [fragment for fragment in required_fragments if fragment not in parser_text]
