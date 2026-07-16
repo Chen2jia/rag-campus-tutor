@@ -3,8 +3,6 @@ import { computed, onMounted, ref } from "vue";
 
 import {
   createReview,
-  createTask,
-  deleteTask,
   generatePlan,
   listDocuments,
   listTasks,
@@ -12,7 +10,6 @@ import {
   login,
   rateReview,
   register,
-  updateTask,
   type DocumentRead,
   type PlanGenerateResponse,
   type ReviewRead,
@@ -21,6 +18,7 @@ import {
 } from "./api/client";
 import ChatPanel from "./components/ChatPanel.vue";
 import DocumentLibraryPanel from "./components/DocumentLibraryPanel.vue";
+import TaskPanel from "./components/TaskPanel.vue";
 
 type WorkspaceTab = "chat" | "library" | "tasks" | "review" | "plan";
 
@@ -34,10 +32,6 @@ const password = ref("");
 const documents = ref<DocumentRead[]>([]);
 const selectedDocumentId = ref("");
 const tasks = ref<TaskRead[]>([]);
-const taskTitle = ref("");
-const taskSubject = ref("");
-const taskPriority = ref(3);
-const taskDueDate = ref("");
 const reviews = ref<ReviewRead[]>([]);
 const reviewPoint = ref("");
 const reviewSubject = ref("");
@@ -56,7 +50,6 @@ const selectedDocument = computed(() =>
   documents.value.find((document) => document.id === selectedDocumentId.value),
 );
 const openTasks = computed(() => tasks.value.filter((task) => !task.is_done));
-const doneTasks = computed(() => tasks.value.filter((task) => task.is_done));
 const canSubmitAuth = computed(() => {
   if (authMode.value === "register" && username.value.trim().length < 2) {
     return false;
@@ -158,45 +151,8 @@ function updateSelectedDocumentId(nextDocumentId: string) {
   selectedDocumentId.value = nextDocumentId;
 }
 
-async function submitTask() {
-  if (!token.value || !taskTitle.value.trim()) {
-    return;
-  }
-  await runTask("task-create", async () => {
-    await createTask(token.value, {
-      title: taskTitle.value.trim(),
-      subject: taskSubject.value.trim() || null,
-      priority: taskPriority.value,
-      due_date: taskDueDate.value || null,
-    });
-    taskTitle.value = "";
-    taskSubject.value = "";
-    taskPriority.value = 3;
-    taskDueDate.value = "";
-    tasks.value = await listTasks(token.value);
-    notice.value = "任务已创建";
-  });
-}
-
-async function toggleTask(task: TaskRead) {
-  if (!token.value) {
-    return;
-  }
-  await runTask(`task-${task.id}`, async () => {
-    const updated = await updateTask(token.value, task.id, { is_done: !task.is_done });
-    tasks.value = tasks.value.map((item) => (item.id === updated.id ? updated : item));
-  });
-}
-
-async function removeTask(task: TaskRead) {
-  if (!token.value) {
-    return;
-  }
-  await runTask(`delete-${task.id}`, async () => {
-    await deleteTask(token.value, task.id);
-    tasks.value = tasks.value.filter((item) => item.id !== task.id);
-    notice.value = "任务已删除";
-  });
+function updateTasks(nextTasks: TaskRead[]) {
+  tasks.value = nextTasks;
 }
 
 async function submitReview() {
@@ -351,64 +307,14 @@ async function runTask(name: string, task: () => Promise<void>) {
         @error="errorMessage = $event"
       />
 
-      <section v-show="activeTab === 'tasks'" class="two-column">
-        <section class="panel">
-          <h2>新建任务</h2>
-          <form class="form-grid" @submit.prevent="submitTask">
-            <label class="field">
-              标题
-              <input v-model="taskTitle" placeholder="例如：完成高数第三章习题" />
-            </label>
-            <label class="field">
-              科目
-              <input v-model="taskSubject" placeholder="可选" />
-            </label>
-            <div class="split-row">
-              <label class="field">
-                优先级
-                <select v-model.number="taskPriority">
-                  <option v-for="priority in [1, 2, 3, 4, 5]" :key="priority" :value="priority">
-                    {{ priority }}
-                  </option>
-                </select>
-              </label>
-              <label class="field">
-                截止日期
-                <input v-model="taskDueDate" type="date" />
-              </label>
-            </div>
-            <button type="submit" class="primary-button" :disabled="!taskTitle.trim() || loading === 'task-create'">
-              创建任务
-            </button>
-          </form>
-        </section>
-
-        <section class="panel">
-          <div class="panel-heading">
-            <h2>任务列表</h2>
-            <span class="counter">{{ openTasks.length }} 未完成</span>
-          </div>
-          <div class="item-list">
-            <article v-for="task in openTasks" :key="task.id" class="task-item">
-              <input type="checkbox" :checked="task.is_done" @change="toggleTask(task)" />
-              <div>
-                <strong>{{ task.title }}</strong>
-                <p>{{ task.subject || "未分类" }} · P{{ task.priority }} · {{ task.due_date || "无截止" }}</p>
-              </div>
-              <button type="button" class="small-button" @click="removeTask(task)">删除</button>
-            </article>
-            <article v-for="task in doneTasks" :key="task.id" class="task-item done">
-              <input type="checkbox" :checked="task.is_done" @change="toggleTask(task)" />
-              <div>
-                <strong>{{ task.title }}</strong>
-                <p>{{ task.subject || "未分类" }} · 已完成</p>
-              </div>
-              <button type="button" class="small-button" @click="removeTask(task)">删除</button>
-            </article>
-            <p v-if="tasks.length === 0" class="empty-state">暂无任务</p>
-          </div>
-        </section>
-      </section>
+      <TaskPanel
+        v-show="activeTab === 'tasks'"
+        :token="token"
+        :tasks="tasks"
+        @update:tasks="updateTasks"
+        @notice="notice = $event"
+        @error="errorMessage = $event"
+      />
 
       <section v-show="activeTab === 'review'" class="two-column">
         <section class="panel">
