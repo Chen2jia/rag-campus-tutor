@@ -50,6 +50,9 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/check_document_processi
 # Check persisted document chunk model, migration, and metadata storage.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_document_chunks_static.ps1
 
+# Check document chunk embedding and Qdrant indexing integration.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_document_vector_indexing_static.ps1
+
 # Check user-scoped keyword search over persisted document chunks.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_document_search_static.ps1
 

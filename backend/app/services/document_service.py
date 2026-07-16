@@ -19,6 +19,7 @@ from app.schemas.document import (
     DocumentUploadResponse,
 )
 from app.services.document_processor import DocumentProcessor
+from app.services.document_vector_indexer import DocumentVectorIndexer
 
 
 class DocumentService:
@@ -128,6 +129,7 @@ class DocumentService:
         document = await self._get_user_document(user=user, document_id=document_id)
         file_path = Path(document.file_path)
 
+        DocumentVectorIndexer().delete_document_vectors(document)
         await self.db.delete(document)
         await self.db.commit()
 
@@ -194,7 +196,8 @@ class DocumentService:
             document.error_message = str(exc)
             document.total_chunks = 0
         else:
-            await self._replace_document_chunks(document, result.chunks)
+            persisted_chunks = await self._replace_document_chunks(document, result.chunks)
+            await DocumentVectorIndexer().index_document_chunks(document, persisted_chunks)
             document.status = "processed"
             document.error_message = None
             document.total_chunks = result.total_chunks
@@ -202,25 +205,30 @@ class DocumentService:
         await self.db.commit()
         await self.db.refresh(document)
 
-    async def _replace_document_chunks(self, document: Document, chunks: list[DocumentChunk]) -> None:
+    async def _replace_document_chunks(
+        self,
+        document: Document,
+        chunks: list[DocumentChunk],
+    ) -> list[DocumentChunkRecord]:
         await self._delete_document_chunks(document)
-        self.db.add_all(
-            [
-                DocumentChunkRecord(
-                    user_id=document.user_id,
-                    document_id=document.id,
-                    chunk_index=chunk.chunk_index,
-                    path=chunk.path,
-                    section=chunk.section,
-                    text=chunk.text,
-                    page_start=chunk.page_start,
-                    page_end=chunk.page_end,
-                    contains_formula=chunk.contains_formula,
-                    formulas_metadata=self._serialize_formulas(chunk),
-                )
-                for chunk in chunks
-            ]
-        )
+        records = [
+            DocumentChunkRecord(
+                user_id=document.user_id,
+                document_id=document.id,
+                chunk_index=chunk.chunk_index,
+                path=chunk.path,
+                section=chunk.section,
+                text=chunk.text,
+                page_start=chunk.page_start,
+                page_end=chunk.page_end,
+                contains_formula=chunk.contains_formula,
+                formulas_metadata=self._serialize_formulas(chunk),
+            )
+            for chunk in chunks
+        ]
+        self.db.add_all(records)
+        await self.db.flush()
+        return records
 
     async def _delete_document_chunks(self, document: Document) -> None:
         await self.db.execute(
