@@ -41,6 +41,9 @@ powershell -ExecutionPolicy Bypass -File harness/scripts/check_vector_store_stat
 # Check hybrid retriever RRF fusion over vector and BM25 hits.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_retriever_static.ps1
 
+# Check user-scoped retrieval service over vector, BM25, and RRF fusion.
+powershell -ExecutionPolicy Bypass -File harness/scripts/check_retrieval_service_static.ps1
+
 # Check chunk generation and formula-preserving metadata.
 powershell -ExecutionPolicy Bypass -File harness/scripts/check_chunker_static.ps1
 

@@ -56,8 +56,8 @@ class AnswerGenerator:
                     "role": "system",
                     "content": (
                         "你是 EduMate 校园学习助手。只根据给定资料回答；"
-                        "如果资料不足，明确说明不知道。保留公式的标准 LaTeX，"
-                        "并用 [1]、[2] 这样的编号引用来源。"
+                        "如果资料不足，要明确说明不知道。保留公式的标准 LaTeX，"
+                        "并使用 [1]、[2] 这样的编号引用来源。"
                     ),
                 },
                 {
@@ -81,7 +81,7 @@ class AnswerGenerator:
         return GeneratedAnswer(
             answer=(
                 f"暂时没有在已上传资料中找到和「{question}」直接相关的内容。"
-                "后续接入向量检索和大模型后，可以给出更完整的解释。"
+                "你可以换一种问法，或先上传更相关的课程资料。"
             ),
             is_placeholder=True,
             answer_provider="placeholder",
@@ -95,7 +95,8 @@ class AnswerGenerator:
         return GeneratedAnswer(
             answer=(
                 f"已从已上传资料中找到 {len(results)} 个和「{question}」相关的片段。"
-                "当前未启用真实模型生成，因此先返回检索上下文；配置 OPENAI_API_KEY 和 OPENAI_MODEL 后可生成正式答案。"
+                "当前未启用真实模型生成，因此先返回检索上下文；配置 OPENAI_API_KEY "
+                "和 OPENAI_MODEL 后可生成正式答案。"
             ),
             is_placeholder=True,
             answer_provider="placeholder",

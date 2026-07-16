@@ -3,20 +3,20 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
-from app.schemas.document import DocumentChunkSearchResult
 from app.schemas.rag import RagAskRequest, RagAskResponse, RagSource
 from app.services.answer_generator import AnswerGenerator
-from app.services.document_service import DocumentService
+from app.services.retrieval_service import RetrievalService
+from app.schemas.document import DocumentChunkSearchResult
 
 
 class RagService:
     def __init__(self, db: AsyncSession) -> None:
-        self.document_service = DocumentService(db)
+        self.retrieval_service = RetrievalService(db)
         self.answer_generator = AnswerGenerator()
 
     async def ask(self, user: User, payload: RagAskRequest) -> RagAskResponse:
         question = payload.question.strip()
-        search_response = await self.document_service.search_chunks(
+        results = await self.retrieval_service.search(
             user=user,
             query_text=question,
             limit=payload.limit,
@@ -32,13 +32,13 @@ class RagService:
                 page_end=result.page_end,
                 contains_formula=result.contains_formula,
             )
-            for result in search_response.results
+            for result in results
         ]
-        context_text = self._format_context(search_response.results)
+        context_text = self._format_context(results)
         generated_answer = await self.answer_generator.generate(
             question=question,
             context_text=context_text,
-            results=search_response.results,
+            results=results,
         )
         return RagAskResponse(
             question=question,

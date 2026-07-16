@@ -47,13 +47,13 @@ def test_rag_schema_contains_sources_and_context() -> None:
         assert fragment in schema_text
 
 
-def test_rag_service_reuses_document_chunk_search() -> None:
+def test_rag_service_reuses_hybrid_retrieval() -> None:
     service_text = (ROOT / "app" / "services" / "rag_service.py").read_text(encoding="utf-8")
     for fragment in [
         "class RagService",
-        "DocumentService(db)",
+        "RetrievalService(db)",
         "AnswerGenerator()",
-        "search_chunks",
+        "retrieval_service.search",
         "query_text=question",
         "document_id=payload.document_id",
         "_format_context",
