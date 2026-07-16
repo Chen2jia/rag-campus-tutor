@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 
 import {
   askRag,
+  getDocumentStatus,
   listDocuments,
   searchDocumentChunks,
   uploadDocument,
   type DocumentChunkSearchResult,
   type DocumentRead,
+  type DocumentStatusResponse,
   type RagAskResponse,
 } from "../api/client";
 
@@ -30,6 +32,11 @@ const searchResults = ref<DocumentChunkSearchResult[]>([]);
 const question = ref("");
 const ragAnswer = ref<RagAskResponse | null>(null);
 const loading = ref("");
+const pollingStatus = ref<DocumentStatusResponse | null>(null);
+const pollingTimer = ref<number | null>(null);
+
+const DOCUMENT_STATUS_POLL_INTERVAL_MS = 1200;
+const DOCUMENT_STATUS_MAX_ATTEMPTS = 20;
 
 const selectedDocumentName = computed(() => {
   if (!props.selectedDocumentId) {
@@ -39,6 +46,10 @@ const selectedDocumentName = computed(() => {
     props.documents.find((document) => document.id === props.selectedDocumentId)?.filename ??
     "已选资料"
   );
+});
+
+onBeforeUnmount(() => {
+  clearDocumentPoll();
 });
 
 function selectDocument(documentId: string) {
@@ -76,13 +87,61 @@ async function submitUpload() {
     return;
   }
   await runLibraryTask("upload", async () => {
-    await uploadDocument(props.token, selectedFile.value as File);
+    const response = await uploadDocument(props.token, selectedFile.value as File);
     selectedFile.value = null;
     await loadDocumentsData();
-    emit("notice", "PDF 已处理完成");
+    await waitForDocumentProcessing(response.task_id);
   });
 }
 
+async function waitForDocumentProcessing(taskId: string) {
+  clearDocumentPoll();
+
+  for (let attempt = 0; attempt < DOCUMENT_STATUS_MAX_ATTEMPTS; attempt += 1) {
+    const status = await getDocumentStatus(props.token, taskId);
+    pollingStatus.value = status;
+    await loadDocumentsData();
+
+    if (isFailedStatus(status.status)) {
+      throw new Error(status.error_message ?? "PDF 处理失败");
+    }
+
+    if (isTerminalStatus(status.status)) {
+      emit("notice", `PDF 已处理完成：${status.total_chunks} 个片段`);
+      clearDocumentPoll();
+      return;
+    }
+
+    await waitForNextPoll();
+  }
+
+  emit("notice", "PDF 已上传，仍在处理中，请稍后刷新资料列表");
+  clearDocumentPoll();
+}
+
+function waitForNextPoll(): Promise<void> {
+  return new Promise((resolve) => {
+    pollingTimer.value = window.setTimeout(() => {
+      pollingTimer.value = null;
+      resolve();
+    }, DOCUMENT_STATUS_POLL_INTERVAL_MS);
+  });
+}
+
+function clearDocumentPoll() {
+  if (pollingTimer.value !== null) {
+    window.clearTimeout(pollingTimer.value);
+    pollingTimer.value = null;
+  }
+}
+
+function isTerminalStatus(status: string) {
+  return ["processed", "done", "failed"].includes(status);
+}
+
+function isFailedStatus(status: string) {
+  return status === "failed";
+}
 async function submitSearch() {
   if (!props.token || !searchQuery.value.trim()) {
     return;
@@ -139,6 +198,11 @@ async function runLibraryTask(name: string, task: () => Promise<void>) {
           {{ loading === "upload" ? "处理中" : "上传" }}
         </button>
       </form>
+
+      <p v-if="pollingStatus" class="polling-state">
+        PDF 状态：{{ pollingStatus.status }}，{{ pollingStatus.total_chunks }} 个片段
+        <span v-if="pollingStatus.error_message"> | {{ pollingStatus.error_message }}</span>
+      </p>
 
       <label class="field">
         文档范围
@@ -306,6 +370,11 @@ select {
 .panel-subtitle {
   margin-top: 4px;
   color: #647084;
+  font-size: 13px;
+}
+
+.polling-state {
+  color: #536070;
   font-size: 13px;
 }
 

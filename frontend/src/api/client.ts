@@ -22,6 +22,19 @@ export type DocumentRead = {
   created_at: string;
 };
 
+export type DocumentUploadResponse = {
+  task_id: string;
+  filename: string;
+  status: string;
+};
+
+export type DocumentStatusResponse = {
+  task_id: string;
+  status: string;
+  total_chunks: number;
+  error_message: string | null;
+};
+
 export type DocumentChunkSearchResult = {
   id: string;
   document_id: string;
@@ -225,14 +238,18 @@ export function listDocuments(token: string): Promise<DocumentRead[]> {
   return request<DocumentRead[]>("/documents", { token });
 }
 
-export function uploadDocument(token: string, file: File): Promise<unknown> {
+export function uploadDocument(token: string, file: File): Promise<DocumentUploadResponse> {
   const formData = new FormData();
   formData.append("file", file);
-  return request<unknown>("/documents/upload", {
+  return request<DocumentUploadResponse>("/documents/upload", {
     token,
     method: "POST",
     body: formData,
   });
+}
+
+export function getDocumentStatus(token: string, taskId: string): Promise<DocumentStatusResponse> {
+  return request<DocumentStatusResponse>(`/documents/${taskId}/status`, { token });
 }
 
 export function searchDocumentChunks(

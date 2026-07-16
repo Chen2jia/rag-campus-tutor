@@ -45,6 +45,8 @@ def main() -> None:
         "listDocuments(",
         "uploadDocument(",
         "/documents/upload",
+        "getDocumentStatus(",
+        "/status",
         "searchDocumentChunks(",
         "/documents/chunks/search",
         "askRag(",
@@ -70,6 +72,8 @@ def main() -> None:
         "submitTask",
         "submitReview",
         "submitPlan",
+        "waitForDocumentProcessing",
+        "pollingStatus",
         "ragAnswer",
         "searchResults",
     ]
