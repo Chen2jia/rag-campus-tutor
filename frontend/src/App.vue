@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from "vue";
 
 import {
-  askRag,
   createReview,
   createTask,
   deleteTask,
@@ -13,18 +12,15 @@ import {
   login,
   rateReview,
   register,
-  searchDocumentChunks,
   updateTask,
-  uploadDocument,
-  type DocumentChunkSearchResult,
   type DocumentRead,
   type PlanGenerateResponse,
-  type RagAskResponse,
   type ReviewRead,
   type TaskRead,
   type User,
 } from "./api/client";
 import ChatPanel from "./components/ChatPanel.vue";
+import DocumentLibraryPanel from "./components/DocumentLibraryPanel.vue";
 
 type WorkspaceTab = "chat" | "library" | "tasks" | "review" | "plan";
 
@@ -37,11 +33,6 @@ const email = ref("");
 const password = ref("");
 const documents = ref<DocumentRead[]>([]);
 const selectedDocumentId = ref("");
-const selectedFile = ref<File | null>(null);
-const searchQuery = ref("");
-const searchResults = ref<DocumentChunkSearchResult[]>([]);
-const question = ref("");
-const ragAnswer = ref<RagAskResponse | null>(null);
 const tasks = ref<TaskRead[]>([]);
 const taskTitle = ref("");
 const taskSubject = ref("");
@@ -127,8 +118,6 @@ function logout() {
   user.value = null;
   documents.value = [];
   selectedDocumentId.value = "";
-  searchResults.value = [];
-  ragAnswer.value = null;
   tasks.value = [];
   reviews.value = [];
   planResult.value = null;
@@ -142,14 +131,6 @@ async function refreshWorkspace() {
   }
   await loadWorkspaceData();
   notice.value = "工作台已刷新";
-}
-
-async function refreshDocuments() {
-  if (!token.value) {
-    return;
-  }
-  await loadDocumentsData();
-  notice.value = "资料已刷新";
 }
 
 async function loadWorkspaceData() {
@@ -169,56 +150,12 @@ async function loadWorkspaceData() {
   }
 }
 
-async function loadDocumentsData() {
-  documents.value = await listDocuments(token.value);
-  if (
-    selectedDocumentId.value &&
-    !documents.value.some((document) => document.id === selectedDocumentId.value)
-  ) {
-    selectedDocumentId.value = "";
-  }
+function updateLibraryDocuments(nextDocuments: DocumentRead[]) {
+  documents.value = nextDocuments;
 }
 
-function handleFileChange(event: Event) {
-  const input = event.target as HTMLInputElement;
-  selectedFile.value = input.files?.[0] ?? null;
-}
-
-async function submitUpload() {
-  if (!token.value || !selectedFile.value) {
-    return;
-  }
-  await runTask("upload", async () => {
-    await uploadDocument(token.value, selectedFile.value as File);
-    selectedFile.value = null;
-    await loadDocumentsData();
-    notice.value = "PDF 已处理完成";
-  });
-}
-
-async function submitSearch() {
-  if (!token.value || !searchQuery.value.trim()) {
-    return;
-  }
-  await runTask("search", async () => {
-    const response = await searchDocumentChunks(
-      token.value,
-      searchQuery.value.trim(),
-      selectedDocumentId.value,
-    );
-    searchResults.value = response.results;
-    notice.value = `找到 ${response.total} 个片段`;
-  });
-}
-
-async function submitQuestion() {
-  if (!token.value || !question.value.trim()) {
-    return;
-  }
-  await runTask("rag", async () => {
-    ragAnswer.value = await askRag(token.value, question.value.trim(), selectedDocumentId.value);
-    notice.value = ragAnswer.value.is_placeholder ? "已返回检索上下文" : "已生成回答";
-  });
+function updateSelectedDocumentId(nextDocumentId: string) {
+  selectedDocumentId.value = nextDocumentId;
 }
 
 async function submitTask() {
@@ -403,94 +340,16 @@ async function runTask(name: string, task: () => Promise<void>) {
         />
       </section>
 
-      <section v-show="activeTab === 'library'" class="library-grid">
-        <aside class="panel document-panel">
-          <div class="panel-heading">
-            <h2>资料</h2>
-            <button type="button" class="ghost-button" @click="refreshDocuments">刷新</button>
-          </div>
-
-          <form class="upload-row" @submit.prevent="submitUpload">
-            <input type="file" accept="application/pdf" @change="handleFileChange" />
-            <button type="submit" class="primary-button" :disabled="!selectedFile || loading === 'upload'">
-              {{ loading === "upload" ? "处理中" : "上传" }}
-            </button>
-          </form>
-
-          <label class="field">
-            文档范围
-            <select v-model="selectedDocumentId">
-              <option value="">全部文档</option>
-              <option v-for="document in documents" :key="document.id" :value="document.id">
-                {{ document.filename }}
-              </option>
-            </select>
-          </label>
-
-          <div class="document-list">
-            <article v-for="document in documents" :key="document.id" class="document-item">
-              <div>
-                <strong>{{ document.filename }}</strong>
-                <p>{{ document.total_chunks }} chunks · {{ document.status }}</p>
-              </div>
-              <button type="button" class="small-button" @click="selectedDocumentId = document.id">
-                选择
-              </button>
-            </article>
-            <p v-if="documents.length === 0" class="empty-state">暂无资料</p>
-          </div>
-        </aside>
-
-        <section class="main-panel">
-          <div class="tool-grid">
-            <section class="panel tool-panel">
-              <h2>检索</h2>
-              <form class="query-row" @submit.prevent="submitSearch">
-                <input v-model="searchQuery" placeholder="输入关键词" />
-                <button type="submit" class="primary-button" :disabled="!searchQuery.trim() || loading === 'search'">
-                  {{ loading === "search" ? "检索中" : "检索" }}
-                </button>
-              </form>
-              <div class="result-list">
-                <article v-for="result in searchResults" :key="result.id" class="result-item">
-                  <div class="result-meta">
-                    <span>{{ result.filename }}</span>
-                    <span>第 {{ result.page_start }}-{{ result.page_end }} 页</span>
-                    <span v-if="result.contains_formula">含公式</span>
-                  </div>
-                  <h3>{{ result.path }}</h3>
-                  <p>{{ result.text }}</p>
-                </article>
-                <p v-if="searchResults.length === 0" class="empty-state">暂无检索结果</p>
-              </div>
-            </section>
-
-            <section class="panel tool-panel">
-              <h2>问答</h2>
-              <form class="query-row" @submit.prevent="submitQuestion">
-                <input v-model="question" placeholder="输入问题" />
-                <button type="submit" class="primary-button" :disabled="!question.trim() || loading === 'rag'">
-                  {{ loading === "rag" ? "生成中" : "提问" }}
-                </button>
-              </form>
-
-              <article v-if="ragAnswer" class="answer-box">
-                <div class="answer-meta">
-                  <span>{{ ragAnswer.answer_provider }}</span>
-                  <span>{{ ragAnswer.is_placeholder ? "placeholder" : ragAnswer.model }}</span>
-                </div>
-                <p>{{ ragAnswer.answer }}</p>
-                <div class="source-list">
-                  <span v-for="source in ragAnswer.sources" :key="`${source.document_id}-${source.chunk_index}`">
-                    {{ source.filename }} · {{ source.path }} · {{ source.page_start }}-{{ source.page_end }}
-                  </span>
-                </div>
-              </article>
-              <p v-else class="empty-state">暂无回答</p>
-            </section>
-          </div>
-        </section>
-      </section>
+      <DocumentLibraryPanel
+        v-show="activeTab === 'library'"
+        :token="token"
+        :documents="documents"
+        :selected-document-id="selectedDocumentId"
+        @update:documents="updateLibraryDocuments"
+        @update:selected-document-id="updateSelectedDocumentId"
+        @notice="notice = $event"
+        @error="errorMessage = $event"
+      />
 
       <section v-show="activeTab === 'tasks'" class="two-column">
         <section class="panel">
