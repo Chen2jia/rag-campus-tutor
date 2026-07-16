@@ -83,7 +83,7 @@ edumate/
 | 智能体 Harness | `harness/evals/intent_cases.jsonl`、`harness/runners/agent_eval.py` | 5 类意图识别、置信度、低置信度澄清是否正常。 |
 | Planner Harness | `harness/evals/planner_cases.jsonl` | 计划生成是否结构化，是否能创建待办。 |
 | SSE Harness | `harness/runners/sse_check.py` | `/api/chat` 是否按 `start -> content -> citations -> done` 返回。 |
-| 前端 Harness | 后续可接 Playwright | 登录、上传、提问、待办等主流程是否可操作。 |
+| 前端 Harness | `harness/runners/frontend_rag_static_check.py`、`harness/runners/frontend_chat_static_check.py` | 检查前端 API 封装、Auth/Chat/Document/Task/Review/Plan 面板是否保持接线完整；后续可再接 Playwright 验证真实交互。 |
 | 报告 Harness | `harness/reports/` | 保存每次运行结果，方便对比迭代前后效果。 |
 
 ---
@@ -177,7 +177,7 @@ powershell -File harness/scripts/check_all.ps1
 | Phase 6：RAG 问答与 SSE | RAG 问答 Harness、SSE Harness |
 | Phase 7：主智能体 | 意图识别 Harness |
 | Phase 8：规划智能体 | Planner Harness、SM-2 测试 |
-| Phase 9：前端 | 前端主流程 Harness |
+| Phase 9：前端 | 前端静态接线 Harness、后续 Playwright 主流程 Harness |
 | Phase 10：集成测试 | `check_all` 总体验证 |
 
 ---
@@ -201,5 +201,4 @@ powershell -File harness/scripts/check_all.ps1
 3. **RAG Harness**：保证项目核心亮点可持续迭代。
 4. **智能体 Harness**：保证自然语言入口稳定。
 5. **SSE Harness**：保证聊天体验不被破坏。
-6. **前端 Harness**：等主界面成型后再接入。
-
+6. **前端 Harness**：当前用静态接线检查保护组件拆分后的功能入口，后续再加入 Playwright 主流程。

@@ -11,20 +11,30 @@ flowchart TD
     User["用户"] --> Browser["浏览器 / Vue 前端"]
 
     subgraph Frontend["frontend/ Vue 3 前端"]
-        Views["views/\n页面级组件\nLogin / Register / Home"]
-        Components["components/\n可复用业务组件\nChat / Documents / Todo / Review"]
-        Stores["stores/\n前端状态\nAuth / App State"]
-        Api["api/\n接口封装\nJWT / SSE / HTTP"]
-        Router["router/\n页面路由与登录守卫"]
+        AppShell["App.vue\n工作台壳层\n会话 / Tabs / 共享状态"]
+        AuthPanel["AuthPanel\n登录 / 注册"]
+        ChatPanel["ChatPanel\nSSE 聊天"]
+        DocumentPanel["DocumentLibraryPanel\n资料 / 检索 / RAG"]
+        TaskPanel["TaskPanel\n任务 CRUD"]
+        ReviewPanel["ReviewPanel\n复习评分"]
+        PlanPanel["PlanPanel\n学习计划"]
+        Api["api/client.ts\nJWT / SSE / HTTP"]
 
-        Views --> Components
-        Views --> Stores
-        Components --> Stores
-        Stores --> Api
-        Router --> Views
+        AppShell --> AuthPanel
+        AppShell --> ChatPanel
+        AppShell --> DocumentPanel
+        AppShell --> TaskPanel
+        AppShell --> ReviewPanel
+        AppShell --> PlanPanel
+        AuthPanel --> Api
+        ChatPanel --> Api
+        DocumentPanel --> Api
+        TaskPanel --> Api
+        ReviewPanel --> Api
+        PlanPanel --> Api
     end
 
-    Browser --> Router
+    Browser --> AppShell
     Api -- "HTTP / SSE + JWT" --> Routers
 
     subgraph Backend["backend/ FastAPI 后端"]
@@ -127,29 +137,17 @@ flowchart TD
 | 文件存储 | `backend/uploads/` | 本地上传文件目录，按 `user_id` 分目录保存 PDF。 |
 | 后端测试 | `backend/tests/` | 后端单元测试、接口测试、RAG 测试、用户隔离测试。 |
 | 前端根 | `frontend/` | Vue 3 前端应用根目录。 |
-| 前端入口 | `frontend/src/main.ts` | Vue 应用入口，注册路由、状态管理、UI 库。 |
-| 前端入口 | `frontend/src/App.vue` | 前端根组件，承载应用整体外壳。 |
-| 前端路由 | `frontend/src/router/` | 页面路由、登录守卫、未登录跳转。 |
+| 前端入口 | `frontend/src/main.ts` | Vue 应用入口，挂载根组件。 |
+| 前端壳层 | `frontend/src/App.vue` | 工作台壳层，负责会话恢复、tab 切换、共享状态、全局提示和各业务面板挂载。 |
 | 前端 API 层 | `frontend/src/api/` | 后端 API 调用封装，统一处理 JWT、错误和 SSE。 |
-| 前端 API 层 | `frontend/src/api/client.ts` | HTTP 客户端，自动附带 `Authorization: Bearer <token>`。 |
-| 前端 API 层 | `frontend/src/api/auth.ts` | 注册、登录、当前用户接口。 |
-| 前端 API 层 | `frontend/src/api/chat.ts` | 聊天接口和 SSE 流式读取。 |
-| 前端 API 层 | `frontend/src/api/documents.ts` | 文档上传、列表、状态查询、删除接口。 |
-| 前端 API 层 | `frontend/src/api/tasks.ts` | 待办 CRUD 接口。 |
-| 前端 API 层 | `frontend/src/api/review.ts` | 今日复习、知识点添加、评分接口。 |
-| 前端状态层 | `frontend/src/stores/` | 前端状态管理目录。 |
-| 前端状态层 | `frontend/src/stores/auth.ts` | token、当前用户、登录状态、退出登录。 |
-| 前端状态层 | `frontend/src/stores/app.ts` | 文档列表、待办列表、全局加载状态等。 |
-| 前端页面层 | `frontend/src/views/` | 页面级组件目录。 |
-| 前端页面层 | `frontend/src/views/LoginView.vue` | 登录页面。 |
-| 前端页面层 | `frontend/src/views/RegisterView.vue` | 注册页面。 |
-| 前端页面层 | `frontend/src/views/HomeView.vue` | 主工作台页面。 |
-| 前端组件层 | `frontend/src/components/` | 可复用业务组件目录。 |
-| 前端组件层 | `frontend/src/components/AppShell.vue` | 顶部栏、左侧栏、主内容区布局。 |
+| 前端 API 层 | `frontend/src/api/client.ts` | HTTP/SSE 客户端，封装登录注册、文档、RAG、聊天、任务、复习和计划接口。 |
+| 前端组件层 | `frontend/src/components/` | 业务面板组件目录，每个面板独立维护表单状态、局部 loading 和错误上抛。 |
+| 前端组件层 | `frontend/src/components/AuthPanel.vue` | 登录/注册表单、校验、认证请求和认证成功事件。 |
 | 前端组件层 | `frontend/src/components/ChatPanel.vue` | 聊天消息列表、输入框、SSE 流式渲染、引用展示。 |
-| 前端组件层 | `frontend/src/components/DocumentManager.vue` | 文档上传、文档状态、文档删除。 |
-| 前端组件层 | `frontend/src/components/TodoList.vue` | 待办列表、勾选完成、创建、编辑、删除。 |
-| 前端组件层 | `frontend/src/components/ReviewPanel.vue` | 今日复习列表、掌握程度评分。 |
+| 前端组件层 | `frontend/src/components/DocumentLibraryPanel.vue` | PDF 上传、资料刷新、文档范围选择、chunk 检索和 RAG 问答。 |
+| 前端组件层 | `frontend/src/components/TaskPanel.vue` | 任务创建、完成/取消完成、删除和任务列表展示。 |
+| 前端组件层 | `frontend/src/components/ReviewPanel.vue` | 复习项创建、今日复习列表和掌握程度评分。 |
+| 前端组件层 | `frontend/src/components/PlanPanel.vue` | 学习计划生成、计划结果展示，并在生成后刷新任务列表。 |
 
 ---
 
@@ -171,8 +169,8 @@ flowchart TD
 ### 4.1 用户登录
 
 ```text
-LoginView.vue
-  -> api/auth.ts
+AuthPanel.vue
+  -> api/client.ts
   -> routers/auth.py
   -> services/auth_service.py
   -> models/user.py
@@ -183,8 +181,8 @@ LoginView.vue
 ### 4.2 上传 PDF
 
 ```text
-DocumentManager.vue
-  -> api/documents.ts
+DocumentLibraryPanel.vue
+  -> api/client.ts
   -> routers/documents.py
   -> services/document_service.py
   -> uploads/{user_id}/
@@ -199,7 +197,7 @@ DocumentManager.vue
 
 ```text
 ChatPanel.vue
-  -> api/chat.ts
+  -> api/client.ts
   -> routers/chat.py
   -> agents/master_agent.py
   -> agents/knowledge_agent.py
@@ -212,10 +210,9 @@ ChatPanel.vue
 ### 4.4 生成学习计划
 
 ```text
-ChatPanel.vue
-  -> api/chat.ts
-  -> routers/chat.py
-  -> agents/master_agent.py
+PlanPanel.vue
+  -> api/client.ts
+  -> routers/plan.py
   -> agents/planner_agent.py
   -> services/llm_service.py
   -> services/task_service.py

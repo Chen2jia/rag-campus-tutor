@@ -159,6 +159,7 @@ python -m pytest -q backend\tests
 powershell -ExecutionPolicy Bypass -File harness\scripts\check_skeleton.ps1
 powershell -ExecutionPolicy Bypass -File harness\scripts\check_auth_static.ps1
 powershell -ExecutionPolicy Bypass -File harness\scripts\check_rag_static.ps1
+powershell -ExecutionPolicy Bypass -File harness\scripts\check_frontend_rag_static.ps1
 powershell -ExecutionPolicy Bypass -File harness\scripts\check_frontend_chat_static.ps1
 ```
 
@@ -217,11 +218,9 @@ backend/
 
 frontend/
   src/
-    api/          # HTTP/SSE API 封装
-    components/   # 聊天、资料、任务、复习、计划组件
-    router/       # 预留前端路由
-    stores/       # 预留状态管理
-    views/        # 预留页面目录
+    App.vue       # 工作台壳层：会话、tab、共享状态和全局提示
+    api/          # HTTP/SSE API 封装，当前统一在 client.ts
+    components/   # Auth、Chat、DocumentLibrary、Task、Review、Plan 面板
 
 harness/
   runners/        # Python 检查和 E2E runner
