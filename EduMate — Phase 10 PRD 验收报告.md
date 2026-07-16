@@ -16,7 +16,7 @@
 | PDF/RAG | 通过 | 已实现 PDF 解析、分块、Embedding、Qdrant、BM25、RRF、引用来源 |
 | 智能体 | 通过 | MasterAgent、KnowledgeAgent、PlannerAgent 已接入 |
 | 计划复习 | 通过 | 待办 CRUD、计划生成、SM-2 复习评分已实现 |
-| 前端演示 | 通过 | 已有登录、资料、问答、聊天、任务、复习、计划入口 |
+| 前端演示 | 通过 | 已有组件化工作台，覆盖登录、资料、问答、聊天、任务、复习、计划入口 |
 | Docker 启动 | 通过 | Compose 包含 PostgreSQL、Qdrant、后端、前端、迁移服务 |
 | Harness | 通过 | 静态检查、API smoke、E2E 演示链路均已沉淀 |
 | 当前限制 | 可接受 | 未配置模型密钥时使用 placeholder；复杂 OCR 和聊天历史不在当前范围 |
@@ -27,7 +27,7 @@
 
 | PRD 必做项 | 状态 | 实现证据 |
 | --- | --- | --- |
-| 轻量用户注册、登录、退出和当前用户查询 | 通过 | `backend/app/routers/auth.py`、`backend/app/services/auth_service.py`、`frontend/src/App.vue` |
+| 轻量用户注册、登录、退出和当前用户查询 | 通过 | `backend/app/routers/auth.py`、`backend/app/services/auth_service.py`、`frontend/src/components/AuthPanel.vue`、`frontend/src/App.vue` |
 | 基于 JWT 的会话鉴权 | 通过 | `backend/app/core/security.py`、`backend/app/core/deps.py` |
 | 多用户数据隔离 | 通过 | `Document.user_id`、`Task.user_id`、`ReviewSchedule.user_id`、服务层查询按当前用户过滤 |
 | PDF 上传、解析、层级分块、Embedding 入库 | 通过 | `document_service.py`、`document_processor.py`、`rag/parser.py`、`rag/chunker.py`、`document_vector_indexer.py` |
@@ -41,7 +41,7 @@
 | 待办 CRUD | 通过 | `backend/app/routers/tasks.py`、`backend/app/services/task_service.py` |
 | 学习计划生成 | 通过 | `backend/app/routers/plan.py`、`backend/app/agents/planner_agent.py` |
 | SM-2 简化版间隔重复 | 通过 | `backend/app/services/review_service.py` |
-| Vue 桌面端 Web 界面 | 通过 | `frontend/src/App.vue`、`frontend/src/components/ChatPanel.vue` |
+| Vue 桌面端 Web 界面 | 通过 | `frontend/src/App.vue`、`frontend/src/components/AuthPanel.vue`、`frontend/src/components/ChatPanel.vue`、`frontend/src/components/DocumentLibraryPanel.vue`、`frontend/src/components/TaskPanel.vue`、`frontend/src/components/ReviewPanel.vue`、`frontend/src/components/PlanPanel.vue` |
 | Docker Compose 本地一键启动 | 通过 | `docker-compose.yml`、`backend/Dockerfile`、`frontend/Dockerfile` |
 
 ---
@@ -92,6 +92,8 @@
 | 后端测试全集 | `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest -q backend\tests` | 通过 |
 | 前端类型检查 | `npm exec -- vue-tsc -b` | 通过 |
 | 前端构建 | `npm run build` | 通过 |
+| 前端 RAG 工作台静态 Harness | `powershell -ExecutionPolicy Bypass -File harness\scripts\check_frontend_rag_static.ps1` | 通过 |
+| 前端 Chat SSE 静态 Harness | `powershell -ExecutionPolicy Bypass -File harness\scripts\check_frontend_chat_static.ps1` | 通过 |
 | API Smoke | `powershell -ExecutionPolicy Bypass -File harness\scripts\check_api_smoke.ps1` | 已提供 |
 | E2E 演示链路 | `powershell -ExecutionPolicy Bypass -File harness\scripts\check_e2e_demo_flow.ps1` | 已提供 |
 
@@ -105,7 +107,7 @@
 | --- | --- | --- |
 | 未配置 LLM/API key 时无法生成真实模型回答 | 演示答案质量受限 | 使用 placeholder 兜底，保证链路可测 |
 | PDF 公式 OCR 仍是轻量预留能力 | 对扫描版公式支持有限 | 低置信度不生成 LaTeX，避免乱编 |
-| 前端仍是单文件主工作台为主 | 后续维护粒度可继续拆分 | 当前满足演示，后续可拆 `views/components/stores` |
+| 前端已完成基础组件拆分，但尚未接入路由/状态库 | 当前工作台仍由 `App.vue` 统一挂载 | 暂不引入额外复杂度；后续功能增长后再考虑 router/store |
 | E2E 需要正确后端服务和数据库启动 | 端口占用会导致失败 | Harness 已增加 OpenAPI 预检和报告 |
 | 部分旧文档存在终端乱码显示 | 阅读体验受影响 | README 已更新为 UTF-8，旧文档可后续逐步整理 |
 
@@ -117,9 +119,9 @@
 | --- | --- | --- |
 | P0 | 真实模型联调 | 使用 `OPENAI_BASE_URL` + DeepSeek API 完成低成本真实回答测试 |
 | P0 | E2E 真跑 | 启动 EduMate 后端、PostgreSQL、Qdrant 后运行完整 E2E Harness |
-| P1 | 前端拆分 | 将 `App.vue` 中资料、任务、复习、计划拆成独立组件 |
 | P1 | 文档轮询体验 | 上传后前端自动轮询文档状态，显示失败原因 |
-| P1 | RAG 质量评估 | 增加固定 PDF 样例和问答 eval 集 |
+| P1 | RAG 质量评估 | 扩充固定 PDF 样例和问答 eval 集，跟踪检索命中与引用质量 |
+| P1 | 前端交互 Harness | 在现有静态 Harness 基础上接入 Playwright，覆盖登录、上传、问答、任务主流程 |
 | P2 | 公式 OCR 插件化 | 将 OCR 引擎做成本地可选依赖，完善置信度报告 |
 | P2 | 聊天历史 | 增加用户级会话和消息持久化 |
 
@@ -138,5 +140,5 @@ v0.1.0-demo
 后续进入迭代重点：
 
 ```text
-模型联调 -> E2E 真跑 -> RAG 质量评估 -> 前端组件化 -> 体验增强
+模型联调 -> E2E 真跑 -> RAG 质量评估 -> 前端交互 Harness -> 体验增强
 ```
