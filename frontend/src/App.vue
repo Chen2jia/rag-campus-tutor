@@ -2,13 +2,11 @@
 import { computed, onMounted, ref } from "vue";
 
 import {
-  createReview,
   generatePlan,
   listDocuments,
   listTasks,
   listTodayReviews,
   login,
-  rateReview,
   register,
   type DocumentRead,
   type PlanGenerateResponse,
@@ -18,6 +16,7 @@ import {
 } from "./api/client";
 import ChatPanel from "./components/ChatPanel.vue";
 import DocumentLibraryPanel from "./components/DocumentLibraryPanel.vue";
+import ReviewPanel from "./components/ReviewPanel.vue";
 import TaskPanel from "./components/TaskPanel.vue";
 
 type WorkspaceTab = "chat" | "library" | "tasks" | "review" | "plan";
@@ -33,9 +32,6 @@ const documents = ref<DocumentRead[]>([]);
 const selectedDocumentId = ref("");
 const tasks = ref<TaskRead[]>([]);
 const reviews = ref<ReviewRead[]>([]);
-const reviewPoint = ref("");
-const reviewSubject = ref("");
-const reviewDate = ref(today());
 const planGoal = ref("");
 const planDays = ref(7);
 const planSubject = ref("");
@@ -155,34 +151,8 @@ function updateTasks(nextTasks: TaskRead[]) {
   tasks.value = nextTasks;
 }
 
-async function submitReview() {
-  if (!token.value || !reviewPoint.value.trim()) {
-    return;
-  }
-  await runTask("review-create", async () => {
-    await createReview(
-      token.value,
-      reviewPoint.value.trim(),
-      reviewSubject.value.trim(),
-      reviewDate.value,
-    );
-    reviewPoint.value = "";
-    reviewSubject.value = "";
-    reviewDate.value = today();
-    reviews.value = await listTodayReviews(token.value);
-    notice.value = "复习项已创建";
-  });
-}
-
-async function submitReviewScore(item: ReviewRead, score: number) {
-  if (!token.value) {
-    return;
-  }
-  await runTask(`review-${item.id}-${score}`, async () => {
-    await rateReview(token.value, item.id, score);
-    reviews.value = await listTodayReviews(token.value);
-    notice.value = "复习进度已更新";
-  });
+function updateReviews(nextReviews: ReviewRead[]) {
+  reviews.value = nextReviews;
 }
 
 async function submitPlan() {
@@ -316,55 +286,14 @@ async function runTask(name: string, task: () => Promise<void>) {
         @error="errorMessage = $event"
       />
 
-      <section v-show="activeTab === 'review'" class="two-column">
-        <section class="panel">
-          <h2>新建复习项</h2>
-          <form class="form-grid" @submit.prevent="submitReview">
-            <label class="field">
-              知识点
-              <input v-model="reviewPoint" placeholder="例如：泰勒公式" />
-            </label>
-            <label class="field">
-              科目
-              <input v-model="reviewSubject" placeholder="可选" />
-            </label>
-            <label class="field">
-              下次复习
-              <input v-model="reviewDate" type="date" />
-            </label>
-            <button type="submit" class="primary-button" :disabled="!reviewPoint.trim() || loading === 'review-create'">
-              创建复习项
-            </button>
-          </form>
-        </section>
-
-        <section class="panel">
-          <div class="panel-heading">
-            <h2>今日复习</h2>
-            <span class="counter">{{ reviews.length }} 项</span>
-          </div>
-          <div class="item-list">
-            <article v-for="item in reviews" :key="item.id" class="review-item">
-              <div>
-                <strong>{{ item.knowledge_point }}</strong>
-                <p>{{ item.subject || "未分类" }} · 间隔 {{ item.interval_days }} 天 · EF {{ item.ease_factor.toFixed(2) }}</p>
-              </div>
-              <div class="score-row">
-                <button
-                  v-for="score in [1, 2, 3, 4, 5]"
-                  :key="score"
-                  type="button"
-                  class="score-button"
-                  @click="submitReviewScore(item, score)"
-                >
-                  {{ score }}
-                </button>
-              </div>
-            </article>
-            <p v-if="reviews.length === 0" class="empty-state">今日暂无复习项</p>
-          </div>
-        </section>
-      </section>
+      <ReviewPanel
+        v-show="activeTab === 'review'"
+        :token="token"
+        :reviews="reviews"
+        @update:reviews="updateReviews"
+        @notice="notice = $event"
+        @error="errorMessage = $event"
+      />
 
       <section v-show="activeTab === 'plan'" class="two-column">
         <section class="panel">
