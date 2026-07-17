@@ -21,6 +21,25 @@ const canSubmitAuth = computed(() => {
   return email.value.trim().length > 2 && password.value.length >= 8;
 });
 
+const submitLabel = computed(() => {
+  if (loading.value) {
+    return "处理中";
+  }
+  return authMode.value === "login" ? "登录" : "创建账号";
+});
+
+const authHelpText = computed(() => {
+  if (authMode.value === "register") {
+    return "用户名至少 2 个字符，密码至少 8 位。";
+  }
+  return "请输入注册时使用的邮箱和至少 8 位密码。";
+});
+
+function switchAuthMode(mode: "login" | "register") {
+  authMode.value = mode;
+  errorMessage.value = "";
+}
+
 async function submitAuth() {
   if (!canSubmitAuth.value || loading.value) {
     return;
@@ -35,7 +54,7 @@ async function submitAuth() {
         : await register(username.value.trim(), email.value.trim(), password.value);
     emit("authenticated", response);
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : "登录失败";
+    errorMessage.value = error instanceof Error ? error.message : "认证失败";
   } finally {
     loading.value = false;
   }
@@ -48,14 +67,14 @@ async function submitAuth() {
       <button
         type="button"
         :class="{ active: authMode === 'login' }"
-        @click="authMode = 'login'"
+        @click="switchAuthMode('login')"
       >
         登录
       </button>
       <button
         type="button"
         :class="{ active: authMode === 'register' }"
-        @click="authMode = 'register'"
+        @click="switchAuthMode('register')"
       >
         注册
       </button>
@@ -72,10 +91,16 @@ async function submitAuth() {
       </label>
       <label>
         密码
-        <input v-model="password" autocomplete="current-password" type="password" minlength="8" />
+        <input
+          v-model="password"
+          :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'"
+          type="password"
+          minlength="8"
+        />
       </label>
+      <p class="auth-help">{{ authHelpText }}</p>
       <button type="submit" class="primary-button" :disabled="!canSubmitAuth || loading">
-        {{ loading ? "处理中" : authMode === "login" ? "登录" : "创建账号" }}
+        {{ submitLabel }}
       </button>
     </form>
 
@@ -156,6 +181,13 @@ button:disabled {
   font: inherit;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.auth-help {
+  margin: -4px 0 0;
+  color: #647084;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .auth-error {
