@@ -137,9 +137,7 @@ function patchMessage(
     }
 
     if (event.event === "done") {
-      return {
-        ...message,
-      };
+      return { ...message };
     }
 
     return {
@@ -154,7 +152,7 @@ function patchMessage(
   <section class="chat-panel">
     <div class="chat-header">
       <div>
-        <h2>聊天</h2>
+        <h2>对话</h2>
         <p>当前范围：{{ scopeLabel }}</p>
       </div>
       <span class="chat-status">{{ loading ? "生成中" : "就绪" }}</span>
@@ -175,20 +173,22 @@ function patchMessage(
         </div>
         <div v-if="message.sources.length > 0" class="source-list">
           <span v-for="source in message.sources" :key="`${source.document_id}-${source.chunk_index}`">
-            {{ source.filename }} · {{ source.page_start }}-{{ source.page_end }}
+            {{ source.filename }} | {{ source.path }} | {{ source.page_start }}-{{ source.page_end }}
           </span>
         </div>
         <p v-if="message.contextText" class="context-text">{{ message.contextText }}</p>
         <p v-if="message.errorMessage" class="error-text">{{ message.errorMessage }}</p>
       </article>
-      <p v-if="messages.length === 0" class="empty-state">先问一句，看看系统怎么回答。</p>
+      <p v-if="messages.length === 0" class="empty-state">
+        先问一句试试，例如“帮我生成 3 天复习计划”或“总结这份资料的重点”。
+      </p>
     </div>
 
     <form class="chat-form" @submit.prevent="sendMessage">
       <textarea
         v-model="input"
         rows="4"
-        placeholder="输入问题，或说“帮我生成 3 天复习计划”"
+        placeholder="输入问题、学习目标，或让助手基于资料回答"
       />
       <button type="submit" class="primary-button" :disabled="loading || !input.trim()">
         {{ loading ? "发送中" : "发送" }}
@@ -273,6 +273,11 @@ function patchMessage(
   font-size: 13px;
 }
 
+.empty-state {
+  margin: 0;
+  color: #536070;
+}
+
 .error-chip,
 .error-text {
   color: #b42318;
@@ -291,5 +296,23 @@ textarea {
   border-radius: 6px;
   padding: 10px 12px;
   font: inherit;
+}
+
+.primary-button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 14px;
+  background: #2454d6;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 </style>

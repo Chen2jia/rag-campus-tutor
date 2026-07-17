@@ -33,6 +33,7 @@ def main() -> None:
         ":selected-document-id=\"selectedDocumentId\"",
         ":selected-document-name=\"selectedDocument?.filename ?? ''\"",
         'class="chat-panel"',
+        "当前范围",
         'streamChat(props.token, text, props.selectedDocumentId',
         'event: "start"',
         'event: "content"',

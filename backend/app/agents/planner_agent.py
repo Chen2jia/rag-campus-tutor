@@ -48,11 +48,11 @@ class PlannerAgent:
             day_number = index + 1
             current_date = start_date + timedelta(days=index)
             if day_number == payload.days:
-                action = "总结复盘并完成综合练习"
+                action = "总结复盘，完成一轮综合练习，并整理仍然薄弱的知识点"
             elif day_number == 1:
-                action = "梳理核心概念并完成基础练习"
+                action = "梳理核心概念，建立知识框架，并完成基础练习"
             else:
-                action = "推进重点内容并整理错题"
+                action = "推进重点内容，结合错题进行针对性训练"
 
             plan_days.append(
                 PlanDay(
@@ -66,7 +66,7 @@ class PlannerAgent:
 
     @staticmethod
     def _format_plan_text(goal: str, plan_days: list[PlanDay]) -> str:
-        lines = [f"【复习计划：{goal.strip()}】"]
+        lines = [f"复习计划：{goal.strip()}"]
         for plan_day in plan_days:
             lines.append(
                 f"Day {plan_day.day}（{plan_day.date.isoformat()}）：{plan_day.description}"

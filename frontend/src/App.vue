@@ -74,6 +74,7 @@ async function handleAuthenticated(response: TokenResponse) {
   await loadWorkspaceData();
   notice.value = `已进入 ${response.user.username} 的学习空间`;
 }
+
 function logout() {
   token.value = "";
   user.value = null;
@@ -130,7 +131,6 @@ function updateReviews(nextReviews: ReviewRead[]) {
 function updatePlanResult(nextPlanResult: PlanGenerateResponse | null) {
   planResult.value = nextPlanResult;
 }
-
 </script>
 
 <template>

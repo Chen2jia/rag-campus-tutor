@@ -59,8 +59,9 @@ class AnswerGenerator:
     def _placeholder_no_context(question: str) -> GeneratedAnswer:
         return GeneratedAnswer(
             answer=(
-                f"暂时没有在已上传资料中找到和「{question}」直接相关的内容。"
-                "你可以换一种问法，或先上传更相关的课程资料。"
+                f"我暂时没有在已上传资料中找到和“{question}”直接相关的内容。\n\n"
+                "你可以换一种问法，或者先上传更相关的课程 PDF。如果这是普通学习问题，"
+                "也可以直接在聊天页提问，我会按通用学习助手的方式回答。"
             ),
             is_placeholder=True,
             answer_provider="placeholder",
@@ -73,9 +74,10 @@ class AnswerGenerator:
     ) -> GeneratedAnswer:
         return GeneratedAnswer(
             answer=(
-                f"已从已上传资料中找到 {len(results)} 个和「{question}」相关的片段。"
-                "当前未启用真实模型生成，因此先返回检索上下文；配置 OPENAI_API_KEY "
-                "和 OPENAI_MODEL 后可生成正式答案。使用 DeepSeek 时请同时配置 OPENAI_BASE_URL。"
+                f"我已经从已上传资料中找到 {len(results)} 个和“{question}”相关的片段。\n\n"
+                "当前运行中的后端还没有启用真实模型生成，所以先返回检索上下文。"
+                "配置 OPENAI_API_KEY 和 OPENAI_MODEL 后，会生成正式答案；使用 DeepSeek 时，"
+                "请同时配置 OPENAI_BASE_URL。"
             ),
             is_placeholder=True,
             answer_provider="placeholder",

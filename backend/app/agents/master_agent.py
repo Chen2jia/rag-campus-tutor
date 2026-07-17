@@ -7,6 +7,8 @@ from datetime import date
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agents.context import AgentContext
+from app.agents.general_agent import GeneralAgent
 from app.agents.knowledge_agent import KnowledgeAgent
 from app.agents.planner_agent import PlannerAgent
 from app.models.user import User
@@ -15,11 +17,12 @@ from app.schemas.plan import PlanGenerateRequest
 
 
 class MasterAgent:
-    """Lightweight intent router for knowledge, plan, and general chat."""
+    """Small agent graph: classify intent, run the matching agent, stream SSE."""
 
     def __init__(self, db: AsyncSession) -> None:
         self.knowledge_agent = KnowledgeAgent(db)
         self.planner_agent = PlannerAgent(db)
+        self.general_agent = GeneralAgent()
 
     def detect_intent(self, message: str, document_id: object | None = None) -> ChatIntent:
         if document_id is not None:
@@ -33,8 +36,9 @@ class MasterAgent:
         return ChatIntent.general
 
     async def stream_answer(self, user: User, payload: ChatRequest) -> AsyncIterator[str]:
-        intent = self.detect_intent(payload.message, payload.document_id)
-        yield self._sse("start", {"message": payload.message, "intent": intent.value})
+        context = AgentContext.from_chat_request(user=user, payload=payload)
+        intent = self.detect_intent(context.message, context.document_id)
+        yield self._sse("start", {"message": context.message, "intent": intent.value})
 
         if intent is ChatIntent.knowledge:
             response = await self.knowledge_agent.answer(user=user, payload=payload)
@@ -62,8 +66,8 @@ class MasterAgent:
             plan_response = await self.planner_agent.generate_plan(
                 user=user,
                 payload=PlanGenerateRequest(
-                    goal=self._normalize_goal(payload.message),
-                    days=self._extract_days(payload.message),
+                    goal=self._normalize_goal(context.message),
+                    days=self._extract_days(context.message),
                     start_date=date.today(),
                 ),
             )
@@ -72,7 +76,9 @@ class MasterAgent:
                 {
                     "text": plan_response.plan_text,
                     "intent": intent.value,
-                    "created_tasks": [task.id for task in plan_response.created_tasks],
+                    "is_placeholder": True,
+                    "answer_provider": "planner",
+                    "created_tasks": [str(task.id) for task in plan_response.created_tasks],
                 },
             )
             yield self._sse(
@@ -84,15 +90,15 @@ class MasterAgent:
             )
             return
 
+        general_response = await self.general_agent.answer(context)
         yield self._sse(
             "content",
             {
-                "text": (
-                    "我现在主要支持资料问答和复习计划。"
-                    "你可以直接问课程资料，或者说“帮我生成 3 天复习计划”。"
-                ),
+                "text": general_response.text,
                 "intent": intent.value,
-                "is_placeholder": True,
+                "is_placeholder": general_response.is_placeholder,
+                "answer_provider": general_response.answer_provider,
+                "model": general_response.model,
             },
         )
         yield self._sse("done", {"intent": intent.value, "source_count": 0})
@@ -109,6 +115,7 @@ class MasterAgent:
             "时间表",
             "schedule",
             "plan",
+            "review",
         ]
         return any(keyword in message for keyword in plan_keywords)
 
@@ -126,7 +133,8 @@ class MasterAgent:
             "引用",
             "课件",
             "论文",
-            "知识",
+            "知识点",
+            "根据资料",
         ]
         return any(keyword in message for keyword in knowledge_keywords)
 

@@ -8,6 +8,8 @@ def test_chat_api_files_exist() -> None:
     expected = [
         "app/routers/chat.py",
         "app/schemas/chat.py",
+        "app/agents/context.py",
+        "app/agents/general_agent.py",
         "app/agents/knowledge_agent.py",
     ]
     missing = [path for path in expected if not (ROOT / path).exists()]
@@ -64,3 +66,23 @@ def test_knowledge_agent_wraps_rag_and_sse_events() -> None:
         "ensure_ascii=False",
     ]:
         assert fragment in agent_text
+
+
+def test_master_agent_uses_agent_context_and_general_agent() -> None:
+    master_text = (ROOT / "app" / "agents" / "master_agent.py").read_text(encoding="utf-8")
+    general_text = (ROOT / "app" / "agents" / "general_agent.py").read_text(encoding="utf-8")
+    context_text = (ROOT / "app" / "agents" / "context.py").read_text(encoding="utf-8")
+    combined = "\n".join([master_text, general_text, context_text])
+    for fragment in [
+        "class AgentContext",
+        "from_chat_request",
+        "class GeneralAgent",
+        "LlmService",
+        "general_agent.answer",
+        "detect_intent",
+        "ChatIntent.general",
+        "ChatIntent.knowledge",
+        "ChatIntent.plan",
+        "ensure_ascii=False",
+    ]:
+        assert fragment in combined
